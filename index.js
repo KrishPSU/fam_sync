@@ -27,6 +27,7 @@ app.use(limiter);
 // });
 app.get('/', function(req,res){
   // res.send("Welcome!");
+  res.setHeader("Content-Security-Policy", "default-src 'self'; connect-src 'self' https://api.weather.gov");
   res.sendFile(path.join(__dirname, './app/pages/index.html'));
 });
 

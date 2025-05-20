@@ -8,7 +8,7 @@ const family_btn = document.getElementById('family-button');
 let me;
 window.addEventListener('load', () => {
   me = window.location.pathname.split('/').join('');
-  // register();
+  register();
   socket.emit('request-data-for-person', me);
 });
 

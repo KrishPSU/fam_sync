@@ -8,7 +8,7 @@ const family_btn = document.getElementById('family-button');
 let me;
 window.addEventListener('load', () => {
   me = window.location.pathname.split('/').join('');
-  register();
+  // register();
   socket.emit('request-data-for-person', me);
 });
 
@@ -83,6 +83,7 @@ today_btn.addEventListener('click', () => {
 });
 
 ping_btn.addEventListener('click', () => {
+  register();
   ping_btn.classList.add('active');
   current_active_btn.classList.remove('active');
   current_active_btn = ping_btn;

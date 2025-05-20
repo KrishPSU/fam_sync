@@ -27,6 +27,7 @@ document.getElementById('taskForm').addEventListener('submit', function(e) {
 
   console.log(`Task added:\n${data.title}`);
   addTaskToList(data.title);
+  socket.emit('new-task', data.title, me);
   close_new_task_modal();
   this.reset();
 });

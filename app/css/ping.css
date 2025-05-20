@@ -1,0 +1,135 @@
+.ping {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 16px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  margin: 2rem auto;
+
+  display: flex;
+  flex-direction: column;
+
+  /* overflow: auto;     ✨ scroll if inner content exceeds this */
+}
+
+.ping h2 {
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+
+#pingForm label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+
+#pingForm select,
+#pingForm input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+#pingForm textarea {
+  /* width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+
+  resize: none; 
+  overflow: hidden; 
+  min-height: 80px; */
+
+
+  width: 100%;
+  min-height: 80px;
+  font-size: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+  margin-bottom: 1rem;
+  resize: none;
+  max-height: 20vh;
+  overflow: auto; /* this will change dynamically via JS */
+  transition: height 0.1s ease;
+}
+
+#pingForm button {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+#pingForm button:hover {
+  background-color: #005fd1;
+}
+
+
+
+
+
+
+.sent-box {
+  display: none;
+  max-width: 400px;
+  margin: 10vh auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  /* box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); */
+  text-align: center;
+}
+
+.sent-box h1 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  color: #28a745;
+}
+
+.sent-box p {
+  font-size: 1rem;
+  color: #444;
+  margin-bottom: 1.5rem;
+}
+
+#send-another-btn {
+  display: inline-block;
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: white;
+  border-radius: 10px;
+  border: none;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+#send-another-btn:hover {
+  background-color: #005fd1;
+  cursor: pointer;
+}
+
+
+
+#ping-error {
+  display: none;
+  color: #dc3545;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}

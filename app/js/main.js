@@ -1,6 +1,18 @@
 const socket = io();
 
 
+const today_btn = document.getElementById('today-button');
+const ping_btn = document.getElementById('ping-button');
+const family_btn = document.getElementById('family-button');
+
+let me;
+window.addEventListener('load', () => {
+  me = window.location.pathname.split('/').join('');
+  register();
+  socket.emit('request-data-for-person', me);
+});
+
+
 const my_events_list = document.getElementById('my-events');
 const my_tasks_list = document.getElementById('my-tasks');
 const my_cards_list = document.getElementById('my-cards');
@@ -29,3 +41,66 @@ function addCardToList(title, description) {
     </section>`;
   my_cards_list.appendChild(section_elem);
 }
+
+
+
+socket.on('data-for-person', (events, tasks, cards) => {
+
+  console.log(events, tasks, cards);
+
+  if (events.length > 0) {
+    sortedEvents = sortEventsForPerson(events);
+    sortedEvents.forEach((event) => {
+      addEventToList(event.title, event.time);
+    });
+  }
+  
+  if (tasks.length > 0) {
+    tasks.forEach((task) => {
+      addTaskToList(task.title);
+    });
+  }
+
+  if (cards.length > 0) {
+    cards.forEach((card) => {
+      addCardToList(card.title, card.description);
+    });
+  }
+});
+
+
+
+
+let current_active_btn = today_btn;
+
+today_btn.addEventListener('click', () => {
+  today_btn.classList.add('active');
+  current_active_btn.classList.remove('active');
+  current_active_btn = today_btn;
+  show(today_wrapper);
+  hide(ping_wrapper);
+  hide(family_wrapper);
+});
+
+ping_btn.addEventListener('click', () => {
+  ping_btn.classList.add('active');
+  current_active_btn.classList.remove('active');
+  current_active_btn = ping_btn;
+  document.getElementById('title').value = "";
+  document.getElementById('message').value = "";
+  hide(today_wrapper);
+  hide(noti_sent);
+  hide(ping_error);
+  show(ping_form);
+  show(ping_wrapper);
+  hide(family_wrapper);
+});
+
+family_btn.addEventListener('click', () => {
+  family_btn.classList.add('active');
+  current_active_btn.classList.remove('active');
+  current_active_btn = family_btn;
+  hide(today_wrapper);
+  hide(ping_wrapper);
+  show(family_wrapper);
+});

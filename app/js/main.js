@@ -83,7 +83,7 @@ today_btn.addEventListener('click', () => {
 });
 
 ping_btn.addEventListener('click', () => {
-  register();
+  // register();
   ping_btn.classList.add('active');
   current_active_btn.classList.remove('active');
   current_active_btn = ping_btn;

@@ -36,6 +36,7 @@ document.getElementById('eventForm').addEventListener('submit', function(e) {
   // alert(`Event added:\n${data.title} at ${formattedTime}`);
   console.log(`Event added:\n${data.title} at ${formattedTime}`);
   addEventToList(data.title, formattedTime);
+  socket.emit('new-event', data.title, formattedTime, me);
   close_new_event_modal();
   this.reset();
 });

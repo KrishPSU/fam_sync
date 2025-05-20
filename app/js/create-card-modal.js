@@ -26,6 +26,7 @@ document.getElementById('cardForm').addEventListener('submit', function(e) {
 
   console.log(`Card added:\n${data.title} | \n${data.description}`);
   addCardToList(data.title, data.description);
+  socket.emit('new-card', data.title, data.description, me);
   close_new_card_modal();
   this.reset();
 });

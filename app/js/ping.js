@@ -21,7 +21,7 @@ socket.on('family-members', (family_members) => {
 
 // Register with the server
 async function register() {
-  alert("REGISTERED");
+  // alert("REGISTERED");
   console.log(me);
   socket.emit('register', me);
 

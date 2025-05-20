@@ -11,18 +11,25 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script defer src="../js/main.js"></script>
+  <script defer src="../js/pages.js"></script>
   <script defer src="../js/date.js"></script>
   <script defer src="../js/weather.js"></script>
   <script defer src="../js/new-event-modal.js"></script>
   <script defer src="../js/new-task-modal.js"></script>
   <script defer src="../js/create-card-modal.js"></script>
+  <script defer src="../js/family.js"></script>
+  <script defer src="../js/ping.js"></script>
+
 
   <link rel="stylesheet" href="../css/main.css">
   <link rel="stylesheet" href="../css/modal.css">
+  <link rel="stylesheet" href="../css/family.css">
+  <link rel="stylesheet" href="../css/ping.css">
 
 </head>
 <body>
   <div class="app-container">
+
     <header>
       <div class="header-container">
         <h1>FamSync</h1>
@@ -31,46 +38,99 @@
       <p id="dateDisplay" class="date"></p>
     </header>
 
-    <div id="my-cards">
-      <section class="card">
-        <div class="card-top">
-          <h2>Events Today</h2>
-          <button class="add-to-card-button" id="new-event-btn">+</button>
-        </div>
-        <ul id="my-events">    
-          <!-- <li><strong>3:30 PM</strong> — Soccer Practice (Ava)</li> -->
-        </ul>
-      </section>
+    <div class="today">
+      <div id="my-cards">
+        <section class="card">
+          <div class="card-top">
+            <h2>Events Today</h2>
+            <button class="add-to-card-button" id="new-event-btn">+</button>
+          </div>
+          <ul id="my-events">    
+            <!-- <li><strong>3:30 PM</strong> — Soccer Practice (Ava)</li> -->
+          </ul>
+        </section>
 
-      <section class="card">
-        <div class="card-top">
-          <h2>Tasks To Do</h2>
-          <button class="add-to-card-button" id="new-task-btn">+</button>
-        </div>
-        <div class="checkbox-group" id="my-tasks">
-          <!-- <label><input type="checkbox"> Pick up dry cleaning</label> -->
-        </div>
+        <section class="card">
+          <div class="card-top">
+            <h2>Tasks To Do</h2>
+            <button class="add-to-card-button" id="new-task-btn">+</button>
+          </div>
+          <div class="checkbox-group" id="my-tasks">
+            <!-- <label><input type="checkbox"> Pick up dry cleaning</label> -->
+          </div>
+        </section>
+      </div>
+      
+
+      <!-- <section class="card">
+        <h2>Dinner</h2>
+        <p>🌮 Tacos – check pantry for tortillas</p>
+      </section> -->
+
+      <!-- <section class="card weather-card">
+        <p>🌦️ High of 67°F. Light rain at 4 PM.</p>
+      </section> -->
+
+      <section class="card weather-card">
+        <h2>Weather</h2>
+        <p id="weatherBox">Loading..</p>
       </section>
     </div>
-    
 
-    <!-- <section class="card">
-      <h2>Dinner</h2>
-      <p>🌮 Tacos – check pantry for tortillas</p>
-    </section> -->
+    <div class="ping">
+      <div class="sent-box">
+        <h1>✅ Ping Sent!</h1>
+        <p>Your message was delivered successfully!</p>
+        <button id="send-another-btn">Send another</button>
+      </div>
 
-    <!-- <section class="card weather-card">
-      <p>🌦️ High of 67°F. Light rain at 4 PM.</p>
-    </section> -->
+      <form id="pingForm">
+        <p id="ping-error"><span></span> is not yet registed to recieve pings yet</p>
+        <label for="member">Select Member</label>
+        <select id="member" required>
+          <!-- <option value="">-- Choose --</option> -->
+        </select>
 
-    <section class="card weather-card">
-      <p id="weatherBox">Loading..</p>
-    </section>
+        <label for="title">Title</label>
+        <input type="text" id="title" placeholder="Reminder" required />
+
+        <label for="message">Message</label>
+        <textarea id="message" rows="4" placeholder="Don't forget to walk the dog!" required></textarea>
+
+        <button id="ping-submit-btn">Ping</button>
+      </form>
+    </div>
+
+    <div class="family">
+      <header>
+        <nav>
+          <button id="all_tab" class="tab selected">All</button>
+          <button id="events_tab" class="tab">Events</button>
+          <button id="tasks_tab" class="tab">Tasks</button>
+          <!-- <button class="add-button">+</button> -->
+        </nav>
+      </header>
+
+      <div class="family-events-and-tasks"></div>
+
+      <div class="family-tasks"></div>
+
+      <div class="family-events">
+        <!-- <div class="family-member">
+          <h2>Sophia</h2>
+          <ul>
+            <li>Do homework</li>
+            <li>11:00 AM Dentist appointment</li>
+            <li>5:00 PM Swim practice</li>
+          </ul>
+        </div> -->
+      </div>
+    </div>
 
     <div class="pages-buttons">
-      <button class="today-button active">Today</button>
-      <button class="ping-button">Ping</button>
-      <button class="Family-button">Family</button>
+      <button id="today-button" class="active">Today</button>
+      <button id="ping-button">Ping</button>
+      <button id="family-button">Family</button>
     </div>
   </div>
 

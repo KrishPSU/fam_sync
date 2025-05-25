@@ -258,3 +258,16 @@ input[type="checkbox"] {
   display: none;
   max-height: calc(100vh - 200px);
 }
+
+
+
+
+.task {
+  transition: all 0.2s ease;
+}
+
+.task.checked {
+  text-decoration: line-through;
+  color: #888;
+  opacity: 0.7;
+}

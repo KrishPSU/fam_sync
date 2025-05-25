@@ -264,6 +264,7 @@ io.on("connection", function (socket) {
 
   socket.on('save-subscription', (name, subscription) => {
     console.log(`subscription for ${name} saved`);
+    socket.emit('test', `subscription for ${name} saved`);
     subscriptions[name] = subscription;
     console.log(subscription);
   });

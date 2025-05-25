@@ -27,8 +27,9 @@ async function register() {
   socket.emit('register', me);
 
   const permission = await Notification.requestPermission();
-  alert(permission);
-  console.log(permission);
+  if (permission === 'denied') {
+    alert("You’ve previously blocked notifications. To fix this, please go to iPhone Settings > Safari > Advanced > Website Data, search 'famsyncapp.com', and delete it. Then re-add the app from Safari.");
+  }
   const reg = await navigator.serviceWorker.register('/sw.js');
   const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,

@@ -52,9 +52,6 @@ app.get('/:name', function(req,res){
   // res.send("Welcome!");
 
   const name = req.params.name;
-  
-  // Don't catch actual static files like /main.js or /favicon.ico
-  if (name.includes('.') || name === 'favicon.ico') return next();
 
   let match = false;
   chavans.forEach((person) => {
@@ -230,6 +227,27 @@ io.on("connection", function (socket) {
   socket.on('request-family-members', () => {
     socket.emit('family-members', chavans.sort());
   });
+
+
+
+
+
+  // Task completion
+
+  socket.on('task-crossed', async(taskId, isComplete) => {
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({ complete: isComplete })
+      .eq('id', taskId)
+
+    if (error) {
+      console.error(error);
+    } else {
+      // return data;
+    }
+  });
+
+
 
 
 

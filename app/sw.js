@@ -2,7 +2,7 @@ self.addEventListener('push', function(event) {
   const data = event.data.json();
   const options = {
     body: data.body,
-    icon: 'icon.png' // Optional
+    icon: 'famsync-icon.png' // Optional
   };
   event.waitUntil(
     self.registration.showNotification(data.title, options)

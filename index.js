@@ -270,7 +270,9 @@ io.on("connection", function (socket) {
 
   socket.on('pingUser', (to, title, message) => {
     console.log(`trying to send to ${to} | ${title} --> ${message}`);
+    socket.emit('test', `trying to send to ${to} | ${title} --> ${message}`);
     const subscription = subscriptions[to];
+    socket.emit('test', subscription);
     if (subscription) {
       const payload = JSON.stringify({ title, body: message });
       webPush.sendNotification(subscription, payload).catch(console.error);

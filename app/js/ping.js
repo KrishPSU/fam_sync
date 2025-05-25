@@ -21,12 +21,13 @@ socket.on('family-members', (family_members) => {
 
 // Register with the server
 async function register() {
-  // alert("REGISTERED");
   console.log(me);
   alert("Registering, " + me);
   socket.emit('register', me);
 
   const permission = await Notification.requestPermission();
+  // alert(permission);
+  // console.log(permission);
   if (permission === 'denied') {
     alert("You’ve previously blocked notifications. To fix this, please go to iPhone Settings > Safari > Advanced > Website Data, search 'famsyncapp.com', and delete it. Then re-add the app from Safari.");
   }

@@ -8,7 +8,7 @@ const family_btn = document.getElementById('family-button');
 let me;
 window.addEventListener('load', () => {
   me = window.location.pathname.split('/').join('');
-  register();
+  // register();
   socket.emit('request-data-for-person', me);
 });
 
@@ -93,8 +93,22 @@ today_btn.addEventListener('click', () => {
   hide(family_wrapper);
 });
 
-ping_btn.addEventListener('click', () => {
+ping_btn.addEventListener('click', async() => {
   // register();
+
+  const permission = await Notification.requestPermission();
+  console.log("Permission result:", permission);
+
+  if (permission === 'granted') {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array('BN6FDGyUdl1Or_EP1uWm-Wyt6L5Up2wvnBm6iFZKwgRV-Qd3g69KPQSMqVawOc_LSrvPi_4Ivhmrm4DJOMQHoLs')
+    });
+
+    socket.emit('save-subscription', me, sub);
+  }
+
   ping_btn.classList.add('active');
   current_active_btn.classList.remove('active');
   current_active_btn = ping_btn;

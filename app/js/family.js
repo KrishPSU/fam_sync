@@ -86,9 +86,9 @@ function renderTasks(tasks, family) {
     tasks_for_person.forEach((task) => {
 
       if (task.complete) {
-        tasks_text += `<label class="task completed">— ${task.title}</label>`;
+        tasks_text += `<label class="task completed">— ${task.title}</label><br>`;
       } else {
-        tasks_text += `<label class="task">— ${task.title}</label>`;
+        tasks_text += `<label class="task">— ${task.title}</label><br>`;
       }
     });
 
@@ -143,9 +143,9 @@ function renderAll(events, tasks, family) {
       tasks_for_person.forEach((task) => {
 
         if (task.complete) {
-          tasks_text += `<label class="task completed">— ${task.title}</label>`;
+          tasks_text += `<label class="task completed">— ${task.title}</label><br>`;
         } else {
-          tasks_text += `<label class="task">— ${task.title}</label>`;
+          tasks_text += `<label class="task">— ${task.title}</label><br>`;
         }
       });
     }

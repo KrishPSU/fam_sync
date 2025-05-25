@@ -94,6 +94,6 @@ nav {
 /* Style when task is completed */
 .task.completed {
   text-decoration: line-through;
-  color: #999;
+  color: #888;
   opacity: 0.7;
 }

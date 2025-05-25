@@ -275,8 +275,13 @@ io.on("connection", function (socket) {
     const subscription = subscriptions[to];
     socket.emit('test', subscription);
     if (subscription) {
-      const noti_header = `${title} - ${from}`;
-      const payload = JSON.stringify({ noti_header, body: message });
+      // const noti_header = `${title} - ${from}`;
+      // const payload = JSON.stringify({ noti_header, body: message });
+      const formattedTitle = `${from} pinged you: ${title}`; // e.g. "Krish pinged you: Reminder"
+      const payload = JSON.stringify({
+        title: formattedTitle,
+        body: message
+      });
       webPush.sendNotification(subscription, payload).catch(console.error);
       console.log(`Noti sent to ${to}`);
       socket.emit('registered-and-sent', to);

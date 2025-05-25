@@ -23,6 +23,7 @@ socket.on('family-members', (family_members) => {
 async function register() {
   // alert("REGISTERED");
   console.log(me);
+  alert("Registering, " + me);
   socket.emit('register', me);
 
   const permission = await Notification.requestPermission();

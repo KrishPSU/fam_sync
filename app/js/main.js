@@ -31,7 +31,7 @@ function addTaskToList(task, task_id, isComplete) {
   label_elem.classList.add("task");
   let innerHtml;
   if (isComplete) {
-    label_elem.classList.add("checked");
+    label_elem.classList.add("completed");
     innerHtml = `<input type="checkbox" checked> ${task}`;
   } else {
     innerHtml = `<input type="checkbox"> ${task}`;

@@ -269,13 +269,14 @@ io.on("connection", function (socket) {
     console.log(subscription);
   });
 
-  socket.on('pingUser', (to, title, message) => {
+  socket.on('pingUser', (to, from, title, message) => {
     console.log(`trying to send to ${to} | ${title} --> ${message}`);
-    socket.emit('test', `trying to send to ${to} | ${title} --> ${message}`);
+    // socket.emit('test', `trying to send to ${to} | ${title} --> ${message}`);
     const subscription = subscriptions[to];
     socket.emit('test', subscription);
     if (subscription) {
-      const payload = JSON.stringify({ title, body: message });
+      const noti_header = `${title} - ${from}`;
+      const payload = JSON.stringify({ noti_header, body: message });
       webPush.sendNotification(subscription, payload).catch(console.error);
       console.log(`Noti sent to ${to}`);
       socket.emit('registered-and-sent', to);

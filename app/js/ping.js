@@ -27,6 +27,8 @@ async function register() {
   socket.emit('register', me);
 
   const permission = await Notification.requestPermission();
+  alert(permission);
+  console.log(permission);
   const reg = await navigator.serviceWorker.register('/sw.js');
   const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,

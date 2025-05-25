@@ -7,10 +7,10 @@ my_tasks_list.addEventListener('click', function (e) {
     let isComplete = false;
 
     if (e.target.checked) {
-      task.classList.add('checked');
+      task.classList.add('completed');
       isComplete = true;
     } else {
-      task.classList.remove('checked');
+      task.classList.remove('completed');
     }
 
     // console.log(`Task Clicked:\nid: ${task.id}\ntext: ${task.innerText.trim()}\ncomplete: ${isComplete}`);

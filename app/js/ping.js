@@ -22,7 +22,7 @@ socket.on('family-members', (family_members) => {
 // Register with the server
 async function register() {
   console.log(me);
-  alert("Registering, " + me);
+  // alert("Registering, " + me);
   socket.emit('register', me);
 
   const permission = await Notification.requestPermission();
@@ -49,7 +49,7 @@ document.getElementById('ping-submit-btn').addEventListener('click', (e) => {
   if (to == "" || title.trim() == "" || message.trim() == "") return;
 
   console.log("pinging..");
-  socket.emit('pingUser', to, title, message);
+  socket.emit('pingUser', to, uppercaseFirstLetter(me), title, message);
 });
 
 // Helper

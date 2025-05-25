@@ -20,14 +20,24 @@ const my_cards_list = document.getElementById('my-cards');
 
 function addEventToList(event, time) {
   const li_elem = document.createElement('li');
+  li_elem.classList.add("event");
   li_elem.innerHTML = `<strong>${time}</strong> — ${event}`;
   my_events_list.appendChild(li_elem);
 }
 
 
-function addTaskToList(task) {
+function addTaskToList(task, task_id, isComplete) {
   const label_elem = document.createElement('label');
-  label_elem.innerHTML = `<input type="checkbox"> ${task}`;
+  label_elem.classList.add("task");
+  let innerHtml;
+  if (isComplete) {
+    label_elem.classList.add("checked");
+    innerHtml = `<input type="checkbox" checked> ${task}`;
+  } else {
+    innerHtml = `<input type="checkbox"> ${task}`;
+  }
+  label_elem.id = task_id;
+  label_elem.innerHTML = innerHtml;
   my_tasks_list.appendChild(label_elem);
 }
 
@@ -56,8 +66,9 @@ socket.on('data-for-person', (events, tasks, cards) => {
   }
   
   if (tasks.length > 0) {
+    // console.log(tasks);
     tasks.forEach((task) => {
-      addTaskToList(task.title);
+      addTaskToList(task.title, task.id, task.complete);
     });
   }
 
@@ -105,3 +116,10 @@ family_btn.addEventListener('click', () => {
   hide(ping_wrapper);
   show(family_wrapper);
 });
+
+
+
+
+socket.on('test', (data) => {
+  alert(data);
+}); 

@@ -42,13 +42,36 @@ function addTaskToList(task, task_id, isComplete) {
 }
 
 
-function addCardToList(title, description) {
+function addCardToList(title, description, cardOwner, cardId) {
   const section_elem = document.createElement('section');
-  section_elem.innerHTML = `
-    <section class="card">
-      <h2>${title}</h2>
-      <p>${description}</p>
-    </section>`;
+  let innerHtml;
+
+  if (cardOwner == me) {
+    innerHtml = `
+      <section class="card" id=${cardId}>
+        <div class="card-top">
+          <h2>${title}</h2>
+          <button class="dots-button">⋯</button>
+          <div class="dots-menu hidden">
+            <button class="edit-btn">Edit</button>
+            <button class="delete-btn">Delete</button>
+          </div>
+        </div>
+        <div class="card-content">
+          <p>${description}</p>
+        </div>
+      </section>
+    `;
+  } else {
+    innerHtml = `
+      <section class="card" data-owner="${cardOwner}">
+        <h2>${title}</h2>
+        <p>${description}</p>
+      </section>
+    `;
+  }
+
+  section_elem.innerHTML = innerHtml;
   my_cards_list.appendChild(section_elem);
 }
 
@@ -74,7 +97,7 @@ socket.on('data-for-person', (events, tasks, cards) => {
 
   if (cards.length > 0) {
     cards.forEach((card) => {
-      addCardToList(card.title, card.description);
+      addCardToList(card.title, card.description, card.person, card.id);
     });
   }
 });

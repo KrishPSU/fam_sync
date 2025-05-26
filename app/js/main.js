@@ -18,27 +18,42 @@ const my_tasks_list = document.getElementById('my-tasks');
 const my_cards_list = document.getElementById('my-cards');
 
 
-function addEventToList(event, time) {
+function addEventToList(event, event_id, time) {
   const li_elem = document.createElement('li');
-  li_elem.classList.add("event");
-  li_elem.innerHTML = `<strong>${time}</strong> — ${event}`;
+  li_elem.classList.add("event-item");
+  li_elem.innerHTML = `
+    <span><strong>${time}</strong> — ${event}</span>
+    <button class="delete-task-and-event-btn">✕</button>
+  `;
+  li_elem.id = event_id;
   my_events_list.appendChild(li_elem);
 }
 
 
 function addTaskToList(task, task_id, isComplete) {
-  const label_elem = document.createElement('label');
-  label_elem.classList.add("task");
   let innerHtml;
   if (isComplete) {
-    label_elem.classList.add("completed");
-    innerHtml = `<input type="checkbox" checked> ${task}`;
+    innerHtml = `
+      <div class="task-item" id="${task_id}">
+        <label class="task completed">
+          <input type="checkbox" checked />
+          <span>${task}</span>
+        </label>
+        <button class="delete-task-and-event-btn">✕</button>
+      </div>
+    `;
   } else {
-    innerHtml = `<input type="checkbox"> ${task}`;
+    innerHtml = `
+      <div class="task-item" id="${task_id}">
+        <label class="task">
+          <input type="checkbox" />
+          <span>${task}</span>
+        </label>
+        <button class="delete-task-and-event-btn">✕</button>
+      </div>
+    `;
   }
-  label_elem.id = task_id;
-  label_elem.innerHTML = innerHtml;
-  my_tasks_list.appendChild(label_elem);
+  my_tasks_list.innerHTML += innerHtml;
 }
 
 
@@ -54,7 +69,7 @@ function addCardToList(title, description, cardOwner, cardId) {
           <button class="dots-button">⋯</button>
           <div class="dots-menu hidden">
             <button class="edit-btn">Edit</button>
-            <button class="delete-btn">Delete</button>
+            <button class="delete-task-and-event-btn">Delete</button>
           </div>
         </div>
         <div class="card-content">
@@ -84,7 +99,7 @@ socket.on('data-for-person', (events, tasks, cards) => {
   if (events.length > 0) {
     sortedEvents = sortEventsForPerson(events);
     sortedEvents.forEach((event) => {
-      addEventToList(event.title, event.time);
+      addEventToList(event.title, event.id, event.time);
     });
   }
   

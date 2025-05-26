@@ -1,0 +1,93 @@
+.card {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  margin: 1rem auto;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dots-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  color: #555;
+  transition: color 0.2s ease;
+  transform: translateY(-5px);
+  position: relative;
+  z-index: 2;
+}
+
+.dots-button:hover {
+  color: #000;
+}
+
+.card-content {
+  margin-top: 0.75rem;
+}
+
+
+
+
+
+
+.dots-menu {
+  position: absolute;
+  top: 35px;
+  right: 10px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  z-index: 10;
+  overflow: hidden;
+}
+
+/* Common button style */
+.dots-menu button {
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 0.95rem;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+/* Divider between buttons */
+.dots-menu .edit-btn {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Hover styles */
+.dots-menu .edit-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.dots-menu .delete-btn {
+  color: #d73737;
+}
+
+.dots-menu .delete-btn:hover {
+  background-color: #ffecec;
+}
+
+
+.hidden {
+  display: none;
+}

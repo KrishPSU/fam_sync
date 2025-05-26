@@ -262,12 +262,33 @@ input[type="checkbox"] {
 
 
 
-/* .task {
-  transition: all 0.2s ease;
+.delete-task-and-event-btn {
+  background: none;
+  border: none;
+  color: #d73737;
+  font-size: 1rem;
+  font-weight: bold;
+  margin-left: 8px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
 }
 
-.task.checked {
-  text-decoration: line-through;
-  color: #888;
-  opacity: 0.7;
-} */
+.delete-task-and-event-btn:hover {
+  background-color: #ffecec;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.event-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}

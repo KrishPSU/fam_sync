@@ -332,7 +332,7 @@ io.on("connection", function (socket) {
 
   socket.on('save-subscription', (name, subscription) => {
     console.log(`subscription for ${name} saved`);
-    socket.emit('test', `subscription for ${name} saved`);
+    // socket.emit('test', `subscription for ${name} saved`);
     subscriptions[name] = subscription;
     console.log(subscription);
   });
@@ -341,7 +341,7 @@ io.on("connection", function (socket) {
     console.log(`trying to send to ${to} | ${title} --> ${message}`);
     // socket.emit('test', `trying to send to ${to} | ${title} --> ${message}`);
     const subscription = subscriptions[to];
-    socket.emit('test', subscription);
+    // socket.emit('test', subscription);
     if (subscription) {
       // const noti_header = `${title} - ${from}`;
       // const payload = JSON.stringify({ noti_header, body: message });

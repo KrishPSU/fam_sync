@@ -13,6 +13,7 @@ window.addEventListener('load', () => {
 
 submit_person_btn.addEventListener('click', () => {
   if (name_dropdown.value == "") return;
-  console.log(name_dropdown.value);
+  // console.log(name_dropdown.value);
+  localStorage.setItem("person", name_dropdown.value);
   window.location.href = `/${name_dropdown.value}`;
 });

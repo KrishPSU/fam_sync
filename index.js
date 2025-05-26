@@ -318,6 +318,39 @@ io.on("connection", function (socket) {
 
 
 
+  // Task and Event deletion
+
+  socket.on('delete-task', async (taskId) => {
+    const { data, error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId)
+
+    if (error) {
+      console.error(error);
+    } else {
+      // return data;
+    }
+  });
+
+
+
+  socket.on('delete-event', async (eventId) => {
+    const { data, error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId)
+
+    if (error) {
+      console.error(error);
+    } else {
+      // return data;
+    }
+  });
+
+
+
+
 
 
 

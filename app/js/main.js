@@ -34,8 +34,8 @@ function addTaskToList(task, task_id, isComplete) {
   let innerHtml;
   if (isComplete) {
     innerHtml = `
-      <div class="task-item" id="${task_id}">
-        <label class="task completed">
+      <div class="task-item">
+        <label class="task completed" id="${task_id}">
           <input type="checkbox" checked />
           <span>${task}</span>
         </label>
@@ -44,8 +44,8 @@ function addTaskToList(task, task_id, isComplete) {
     `;
   } else {
     innerHtml = `
-      <div class="task-item" id="${task_id}">
-        <label class="task">
+      <div class="task-item">
+        <label class="task" id="${task_id}">
           <input type="checkbox" />
           <span>${task}</span>
         </label>

@@ -69,7 +69,7 @@ function addCardToList(title, description, cardOwner, cardId) {
           <button class="dots-button">⋯</button>
           <div class="dots-menu hidden">
             <button class="edit-btn">Edit</button>
-            <button class="delete-task-and-event-btn">Delete</button>
+            <button class="delete-btn">Delete</button>
           </div>
         </div>
         <div class="card-content">
@@ -79,7 +79,7 @@ function addCardToList(title, description, cardOwner, cardId) {
     `;
   } else {
     innerHtml = `
-      <section class="card" data-owner="${cardOwner}">
+      <section class="card">
         <h2>${title}</h2>
         <p>${description}</p>
       </section>

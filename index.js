@@ -90,6 +90,40 @@ const subscriptions = {}; // { name: PushSubscription }
 
 
 
+app.get('/api/cleanup', async (req, res) => {
+  const secretKey = req.query.key;
+  if (secretKey !== process.env.CRON_SECRET_KEY) {
+    return res.status(401).send('Unauthorized');
+  }
+
+  try {
+    const deleteTables = ['tasks', 'events', 'cards'];
+
+    for (const table of deleteTables) {
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .not('id', 'is', null); // UUID-safe
+
+      if (error) {
+        console.error(`❌ Error deleting ${table}:`, error.message);
+        return res.status(500).send(`Error deleting ${table}`);
+      }
+    }
+
+    console.log("✅ Daily cleanup succeeded");
+    res.send('Cleanup successful');
+  } catch (err) {
+    console.error("❌ Cleanup failed:", err.message);
+    res.status(500).send('Server error during cleanup');
+  }
+});
+
+
+
+
+
+
 io.on("connection", function (socket) {
 
   console.log("New socket connection!");
@@ -135,7 +169,7 @@ io.on("connection", function (socket) {
   socket.on('request-data-for-person', async(person) => {
     const events = await getEventsForPerson(person);
     const tasks = await getTasksForPerson(person);
-    const cards = await getCardsForPerson(person);
+    const cards = await getCards();
     socket.emit('data-for-person', events, tasks, cards);
   });
 
@@ -169,11 +203,10 @@ io.on("connection", function (socket) {
   }
 
 
-  async function getCardsForPerson(person) {
+  async function getCards() {
     const { data, error } = await supabase
       .from('cards')
       .select()
-      .eq('person', person)
 
     if (error) {
       console.error(error);
@@ -227,6 +260,41 @@ io.on("connection", function (socket) {
   socket.on('request-family-members', () => {
     socket.emit('family-members', chavans.sort());
   });
+
+
+
+
+  // Card Deletion / Edits
+
+  socket.on('delete-card', async (cardId) => {
+    const { data, error } = await supabase
+      .from('cards')
+      .delete()
+      .eq('id', cardId)
+
+    if (error) {
+      console.error(error);
+    } else {
+      // return data;
+    }
+  });
+
+
+  socket.on('edit-card', async (cardId, title, description) => {
+    const { data, error } = await supabase
+      .from('cards')
+      .update({ title: title, description: description })
+      .eq('id', cardId)
+
+    if (error) {
+      console.error(error);
+    } else {
+      // return data;
+    }
+  });
+
+
+
 
 
 

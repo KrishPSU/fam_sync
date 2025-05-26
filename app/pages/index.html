@@ -23,12 +23,15 @@
   <script defer src="../js/family.js"></script>
   <script defer src="../js/ping.js"></script>
   <script defer src="../js/tasks.js"></script>
+  <script defer src="../js/card.js"></script>
+  <script defer src="../js/edit-card-modal.js"></script>
 
 
   <link rel="stylesheet" href="../css/main.css">
   <link rel="stylesheet" href="../css/modal.css">
   <link rel="stylesheet" href="../css/family.css">
   <link rel="stylesheet" href="../css/ping.css">
+  <link rel="stylesheet" href="../css/card.css">
 
 </head>
 <body>
@@ -49,7 +52,7 @@
             <h2>Events Today</h2>
             <button class="add-to-card-button" id="new-event-btn">+</button>
           </div>
-          <ul id="my-events">    
+          <ul id="my-events">   
             <!-- <li><strong>3:30 PM</strong> — Soccer Practice (Ava)</li> -->
           </ul>
         </section>
@@ -64,7 +67,6 @@
           </div>
         </section>
       </div>
-      
 
       <!-- <section class="card">
         <h2>Dinner</h2>
@@ -209,6 +211,27 @@
         <div class="modal-buttons">
           <button type="submit" class="submit-btn">Add</button>
           <button type="button" id="close-card-modal-btn" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <div id="editCardModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Edit Card</h2>
+      <form id="editCardForm">
+        <label>Title
+          <input id="edit-title" type="text" name="title" required />
+        </label>
+
+        <label>Description
+          <input id="edit-desc" type="text" name="description" required />
+        </label>
+
+        <div class="modal-buttons">
+          <button type="submit" id="done-editing-card" class="submit-btn">Save</button>
+          <button type="button" id="close-edit-card-modal-btn" class="cancel-btn">Cancel</button>
         </div>
       </form>
     </div>

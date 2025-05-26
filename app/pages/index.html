@@ -10,6 +10,7 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  
 
 
   <script src="/socket.io/socket.io.js"></script>
@@ -25,6 +26,7 @@
   <script defer src="../js/tasks.js"></script>
   <script defer src="../js/card.js"></script>
   <script defer src="../js/edit-card-modal.js"></script>
+  <script defer src="../js/delete-task-and-event.js"></script>
 
 
   <link rel="stylesheet" href="../css/main.css">
@@ -53,7 +55,10 @@
             <button class="add-to-card-button" id="new-event-btn">+</button>
           </div>
           <ul id="my-events">   
-            <!-- <li><strong>3:30 PM</strong> — Soccer Practice (Ava)</li> -->
+            <!-- <li class="event-item">
+              <span><strong>3:00 PM</strong> — Soccer Practice</span>
+              <button class="delete-task-and-event-btn">✕</button>
+            </li> -->
           </ul>
         </section>
 
@@ -63,7 +68,13 @@
             <button class="add-to-card-button" id="new-task-btn">+</button>
           </div>
           <div class="checkbox-group" id="my-tasks">
-            <!-- <label><input type="checkbox"> Pick up dry cleaning</label> -->
+            <!-- <div class="task-item">
+              <label>
+                <input type="checkbox" />
+                <span>Do laundry</span>
+              </label>
+              <button class="delete-task-and-event-btn">✕</button>
+            </div> -->
           </div>
         </section>
       </div>

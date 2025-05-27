@@ -8,7 +8,8 @@ const send_another_btn = document.getElementById('send-another-btn');
 
 
 socket.on('family-members', (family_members) => {
-  members_dropdown.innerHTML = `<option value="">-- Choose --</option>`;
+  members_dropdown.innerHTML += `<option value="">-- Choose --</option>`;
+  members_dropdown.innerHTML += `<option value="all">All</option>`;
   family_members.forEach((member) => {
     if (member != me) {
       members_dropdown.innerHTML += `<option value="${member}">${uppercaseFirstLetter(member)}</option>`;

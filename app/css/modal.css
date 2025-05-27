@@ -44,6 +44,33 @@
   border-radius: 8px;
 }
 
+
+
+textarea#card-description,
+textarea#edit-desc {
+  width: 100%;
+  max-width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  resize: none;
+}
+
+textarea#card-description:focus,
+textarea#edit-desc:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+
+
 .modal-buttons {
   display: flex;
   justify-content: space-between;

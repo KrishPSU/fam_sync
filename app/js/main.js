@@ -175,3 +175,7 @@ family_btn.addEventListener('click', () => {
 socket.on('test', (data) => {
   alert(data);
 }); 
+
+socket.on('client-print', (data) => {
+  console.log(data);
+});

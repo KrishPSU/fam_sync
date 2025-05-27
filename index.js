@@ -367,17 +367,27 @@ io.on("connection", function (socket) {
     console.log(`subscription for ${name} saved`);
     // socket.emit('test', `subscription for ${name} saved`);
     subscriptions[name] = subscription;
-    console.log(subscription);
+    // console.log(subscription);
   });
 
   socket.on('pingUser', (to, from, title, message) => {
     console.log(`trying to send to ${to} | ${title} --> ${message}`);
-    // socket.emit('test', `trying to send to ${to} | ${title} --> ${message}`);
-    const subscription = subscriptions[to];
-    // socket.emit('test', subscription);
+
+    if (to == "all") {
+      // socket.emit('client-print', subscriptions);
+      chavans.forEach((person) => {
+        if (person == from.toLowerCase()) return;
+        sendPing(subscriptions[person], to, from, title, message);
+      });
+    } else {
+      const subscription = subscriptions[to];
+      sendPing(subscription, to, from, title, message);
+    } 
+  });
+
+
+  function sendPing(subscription, to, from, title, message) {
     if (subscription) {
-      // const noti_header = `${title} - ${from}`;
-      // const payload = JSON.stringify({ noti_header, body: message });
       const formattedTitle = `${from} pinged you: ${title}`; // e.g. "Krish pinged you: Reminder"
       const payload = JSON.stringify({
         title: formattedTitle,
@@ -387,9 +397,10 @@ io.on("connection", function (socket) {
       console.log(`Noti sent to ${to}`);
       socket.emit('registered-and-sent', to);
     } else {
+      // console.log(`${to} is not registered : ${subscription}`);
       socket.emit('not-registered-for-notis', to);
     }
-  });
+  }
 
 
 });

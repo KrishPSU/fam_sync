@@ -9,8 +9,8 @@ const receivedTab = document.getElementById('received_tab');
 const sent_messages_wrapper = document.getElementById('sent_messages_wrapper');
 const received_messages_wrapper = document.getElementById('received_messages_wrapper');
 
-const no_sent_messagesEl = document.getElementById('no-sent-messages');
-const no_received_messagesEl = document.getElementById('no-received-messages');
+// const no_sent_messagesEl = document.getElementById('no-sent-messages');
+// const no_received_messagesEl = document.getElementById('no-received-messages');
 
 
 
@@ -30,21 +30,13 @@ messages_toggle.addEventListener('change', () => {
 
 
 socket.on('messages-retrieved', (messagesData) =>{
-  // console.log(messagesData);
+  console.log(messagesData);
 
   let sentMessages = 0;
   let receivedMessages = 0;
 
-  sent_messages_wrapper.innerHTML = `
-    <div class="no-messages" id="no-sent-messages">
-      <p>No messages yet 📭</p>
-    </div>
-  `;
-  received_messages_wrapper.innerHTML = `
-    <div class="no-messages" id="no-received-messages">
-      <p>No messages yet 📭</p>
-    </div>
-  `;
+  sent_messages_wrapper.innerHTML = "";
+  received_messages_wrapper.innerHTML = "";
 
   for (let i=0; i<messagesData.length; i++) {
     let sender = messagesData[i].from;
@@ -52,7 +44,7 @@ socket.on('messages-retrieved', (messagesData) =>{
     let title = messagesData[i].title;
     let messageText = messagesData[i].message;
     let time = formatTo12Hour(messagesData[i].created_at);
-    if (sender == me) {
+    if (sender == uppercaseFirstLetter(me)) {
       const message = `
         <div class="message">
           <div class="message-header">
@@ -82,15 +74,19 @@ socket.on('messages-retrieved', (messagesData) =>{
   }
 
   if (sentMessages == 0) {
-    no_sent_messagesEl.style.display = "block";
-  } else {
-    no_sent_messagesEl.style.display = "none";
+    sent_messages_wrapper.innerHTML = `
+      <div class="no-messages" id="no-sent-messages">
+        <p>No messages yet 📭</p>
+      </div>
+    `;
   }
 
   if (receivedMessages == 0) {
-    no_received_messagesEl.style.display = "block";
-  } else {
-    no_received_messagesEl.style.display = "none";
+    received_messages_wrapper.innerHTML = `
+      <div class="no-messages" id="no-received-messages">
+        <p>No messages yet 📭</p>
+      </div>
+    `;
   }
 });
 

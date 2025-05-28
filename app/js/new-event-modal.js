@@ -35,16 +35,21 @@ document.getElementById('eventForm').addEventListener('submit', function(e) {
 
   // alert(`Event added:\n${data.title} at ${formattedTime}`);
   console.log(`Event added:\n${data.title} at ${formattedTime}`);
-  createClientEvent(data.title, formattedTime);
+  // createClientEvent(data.title, formattedTime);
   socket.emit('new-event', data.title, formattedTime, me);
   close_new_event_modal();
   this.reset();
 });
 
 
-function createClientEvent(event, time) {
-  const li_elem = document.createElement('li');
-  li_elem.classList.add("event");
-  li_elem.innerHTML = `<strong>${time}</strong> — ${event}`;
-  my_events_list.appendChild(li_elem);
-}
+socket.on('event-created-successfully', (event, eventId, time) => {
+  addEventToList(event, eventId, time);
+});
+
+
+// function createClientEvent(event, time) {
+//   const li_elem = document.createElement('li');
+//   li_elem.classList.add("event");
+//   li_elem.innerHTML = `<strong>${time}</strong> — ${event}`;
+//   my_events_list.appendChild(li_elem);
+// }

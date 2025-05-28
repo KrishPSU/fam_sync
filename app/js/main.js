@@ -18,6 +18,7 @@ const my_tasks_list = document.getElementById('my-tasks');
 const my_cards_list = document.getElementById('my-cards');
 
 
+
 function addEventToList(event, event_id, time) {
   const li_elem = document.createElement('li');
   li_elem.classList.add("event-item");
@@ -79,8 +80,8 @@ function addCardToList(title, description, cardOwner, cardId) {
     `;
   } else {
     innerHtml = `
-      <section class="card">
-        <h2>${title}</h2>
+      <section class="card" id=${cardId}>
+        <h2>${title} - ${uppercaseFirstLetter(cardOwner)}</h2>
         <p>${description}</p>
       </section>
     `;
@@ -91,10 +92,18 @@ function addCardToList(title, description, cardOwner, cardId) {
 }
 
 
-
 socket.on('data-for-person', (events, tasks, cards) => {
 
   console.log(events, tasks, cards);
+
+  my_events_list.innerHTML = "";
+  my_tasks_list.innerHTML = "";
+  const allCards = my_cards_list.querySelectorAll('.card');
+  allCards.forEach((card) => {
+    if (card.id != "tasks" && card.id != "events") {
+      card.remove();
+    }
+  });
 
   if (events.length > 0) {
     sortedEvents = sortEventsForPerson(events);
@@ -123,8 +132,9 @@ socket.on('data-for-person', (events, tasks, cards) => {
 let current_active_btn = today_btn;
 
 today_btn.addEventListener('click', () => {
-  today_btn.classList.add('active');
+  socket.emit('request-data-for-person', me);
   current_active_btn.classList.remove('active');
+  today_btn.classList.add('active');
   current_active_btn = today_btn;
   show(today_wrapper);
   hide(ping_wrapper);
@@ -147,8 +157,8 @@ ping_btn.addEventListener('click', async() => {
     socket.emit('save-subscription', me, sub);
   }
 
-  ping_btn.classList.add('active');
   current_active_btn.classList.remove('active');
+  ping_btn.classList.add('active');
   current_active_btn = ping_btn;
   document.getElementById('title').value = "";
   document.getElementById('message').value = "";
@@ -161,8 +171,8 @@ ping_btn.addEventListener('click', async() => {
 });
 
 family_btn.addEventListener('click', () => {
-  family_btn.classList.add('active');
   current_active_btn.classList.remove('active');
+  family_btn.classList.add('active');
   current_active_btn = family_btn;
   hide(today_wrapper);
   hide(ping_wrapper);

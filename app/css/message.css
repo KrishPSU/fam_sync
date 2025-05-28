@@ -1,0 +1,51 @@
+.message {
+  display: block;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 10px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  max-width: 420px;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.message-title {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.message-timestamp {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.message-from {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.message-body {
+  font-size: 1rem;
+  color: #222;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+
+
+.no-messages {
+  display: none;
+  text-align: center;
+  padding: 40px 20px;
+  color: #888;
+  font-size: 1.1rem;
+  font-style: italic;
+}

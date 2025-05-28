@@ -27,6 +27,7 @@
   <script defer src="../js/card.js"></script>
   <script defer src="../js/edit-card-modal.js"></script>
   <script defer src="../js/delete-task-and-event.js"></script>
+  <script defer src="../js/ping-page-display.js"></script>
 
 
   <link rel="stylesheet" href="../css/main.css">
@@ -34,6 +35,7 @@
   <link rel="stylesheet" href="../css/family.css">
   <link rel="stylesheet" href="../css/ping.css">
   <link rel="stylesheet" href="../css/card.css">
+  <link rel="stylesheet" href="../css/message.css">
 
 </head>
 <body>
@@ -101,6 +103,17 @@
         <button id="send-another-btn">Send another</button>
       </div>
 
+      <div class="toggle-wrapper">
+        <input type="radio" name="viewToggle" id="create-toggle" checked>
+        <input type="radio" name="viewToggle" id="messages-toggle">
+        
+        <div class="toggle">
+          <label for="create-toggle" class="toggle-option">Create</label>
+          <label for="messages-toggle" class="toggle-option">Messages</label>
+          <div class="toggle-slider"></div>
+        </div>
+      </div>
+
       <form id="pingForm">
         <p id="ping-error"><span></span> is not yet registed to recieve pings yet</p>
         <label for="member">Select Member</label>
@@ -116,6 +129,33 @@
 
         <button id="ping-submit-btn">Ping</button>
       </form>
+
+      <div id="messages-section">   
+        <div class="messages-container">
+          <nav class="messages-nav">
+            <button id="sent_tab" class="tab selected">Sent</button>
+            <button id="received_tab" class="tab">Received</button>
+          </nav>
+          <div id="sent_messages_wrapper" class="messages-wrapper">
+            <div class="no-messages" id="no-sent-messages">
+              <p>No messages yet 📭</p>
+            </div>
+            <!-- <div class="message">
+              <div class="message-header">
+                <strong class="message-title">Reminder</strong>
+                <span class="message-timestamp">May 28, 2:15 PM</span>
+              </div>
+              <p class="message-from">From: Ava</p>
+              <p class="message-body">Don't forget to take the trash out before dinner!</p>
+            </div> -->
+          </div>
+          <div id="received_messages_wrapper" class="messages-wrapper">
+            <div class="no-messages" id="no-received-messages">
+              <p>No messages yet 📭</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="family">

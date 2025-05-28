@@ -30,7 +30,7 @@ messages_toggle.addEventListener('change', () => {
 
 
 socket.on('messages-retrieved', (messagesData) =>{
-  console.log(messagesData);
+  // console.log(messagesData);
 
   let sentMessages = 0;
   let receivedMessages = 0;

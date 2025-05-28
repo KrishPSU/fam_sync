@@ -41,6 +41,7 @@ nav {
   border-bottom: 2px solid transparent;
   font-weight: 500;
   cursor: pointer;
+  transition: all 0.3s;
 }
 
 .tab.selected {

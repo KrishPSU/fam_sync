@@ -399,7 +399,7 @@ io.on("connection", function (socket) {
   });
 
 
-  function sendPing(subscription, to, from, title, message) {
+  async function sendPing(subscription, to, from, title, message) {
     if (subscription) {
       const formattedTitle = `${from} pinged you: ${title}`; // e.g. "Krish pinged you: Reminder"
       const payload = JSON.stringify({
@@ -409,11 +409,36 @@ io.on("connection", function (socket) {
       webPush.sendNotification(subscription, payload).catch(console.error);
       console.log(`Noti sent to ${to}`);
       socket.emit('registered-and-sent', to);
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({ to: to, from: from, title: title, message: message })
+
+      if (error) {
+        console.error(error);
+      } else {
+        // return data;
+      }
     } else {
       // console.log(`${to} is not registered : ${subscription}`);
       socket.emit('not-registered-for-notis', to);
     }
   }
+
+
+
+
+  socket.on('get-messages', async () => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+
+    if (error) {
+      console.error(error);
+    } else {
+      socket.emit('messages-retrieved', data);
+    }
+  });
+
 
 
 });

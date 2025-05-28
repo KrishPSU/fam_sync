@@ -134,9 +134,12 @@ io.on("connection", function (socket) {
     const { data, error } = await supabase
       .from('events')
       .insert({ title: title, time: time, person: person })
+      .select()
 
     if (error) {
       console.error(error);
+    } else {
+      socket.emit('event-created-successfully', title, data[0].id, time);
     }
   });
 
@@ -146,9 +149,12 @@ io.on("connection", function (socket) {
     const { data, error } = await supabase
       .from('tasks')
       .insert({ title: task, person: person })
+      .select()
 
     if (error) {
       console.error(error);
+    } else {
+      socket.emit('task-created-successfully', task, data[0].id);
     }
   });
 
@@ -158,9 +164,12 @@ io.on("connection", function (socket) {
     const { data, error } = await supabase
       .from('cards')
       .insert({ title: title, description: description, person: person })
+      .select()
 
     if (error) {
       console.error(error);
+    } else {
+      io.emit('update-cards', title, description, person, data[0].id);
     }
   });
 
@@ -271,11 +280,13 @@ io.on("connection", function (socket) {
       .from('cards')
       .delete()
       .eq('id', cardId)
+      .select()
 
     if (error) {
       console.error(error);
     } else {
       // return data;
+      socket.broadcast.emit('card-deletion', cardId);
     }
   });
 
@@ -285,11 +296,13 @@ io.on("connection", function (socket) {
       .from('cards')
       .update({ title: title, description: description })
       .eq('id', cardId)
+      .select()
 
     if (error) {
       console.error(error);
     } else {
       // return data;
+      socket.broadcast.emit('card-edit-complete', cardId, title, description, data[0].person);
     }
   });
 

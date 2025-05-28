@@ -35,8 +35,16 @@ socket.on('messages-retrieved', (messagesData) =>{
   let sentMessages = 0;
   let receivedMessages = 0;
 
-  sent_messages_wrapper.innerHTML = no_sent_messagesEl.innerHTML;
-  received_messages_wrapper.innerHTML = no_received_messagesEl.innerHTML;
+  sent_messages_wrapper.innerHTML = `
+    <div class="no-messages" id="no-sent-messages">
+      <p>No messages yet 📭</p>
+    </div>
+  `;
+  received_messages_wrapper.innerHTML = `
+    <div class="no-messages" id="no-received-messages">
+      <p>No messages yet 📭</p>
+    </div>
+  `;
 
   for (let i=0; i<messagesData.length; i++) {
     let sender = messagesData[i].from;

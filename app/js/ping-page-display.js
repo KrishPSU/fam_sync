@@ -35,6 +35,9 @@ socket.on('messages-retrieved', (messagesData) =>{
   let sentMessages = 0;
   let receivedMessages = 0;
 
+  sent_messages_wrapper.innerHTML = "";
+  received_messages_wrapper.innerHTML = "";
+
   for (let i=0; i<messagesData.length; i++) {
     let sender = messagesData[i].from;
     let recepient = messagesData[i].to;

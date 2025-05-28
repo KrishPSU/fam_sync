@@ -26,16 +26,16 @@ document.getElementById('taskForm').addEventListener('submit', function(e) {
   const data = Object.fromEntries(new FormData(this));
 
   console.log(`Task added:\n${data.title}`);
-  createClientTask(data.title);
+  // createClientTask(data.title);
   socket.emit('new-task', data.title, me);
   close_new_task_modal();
   this.reset();
 });
 
 
-function createClientTask(task) {
-  const label_elem = document.createElement('label');
-  label_elem.classList.add("task-item");
-  label_elem.innerHTML = `<input type="checkbox"> ${task}`;
-  my_tasks_list.appendChild(label_elem);
-}
+// function createClientTask(task) {
+//   const label_elem = document.createElement('label');
+//   label_elem.classList.add("task-item");
+//   label_elem.innerHTML = `<input type="checkbox"> ${task}`;
+//   my_tasks_list.appendChild(label_elem);
+// }

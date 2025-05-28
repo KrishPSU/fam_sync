@@ -1,11 +1,3 @@
-my_cards_list.addEventListener('click', function (e) {
-  if (e.target.classList.contains('dots-button')) {
-    let card = e.target.closest('.card');
-    console.log("Clicked 3-dots on card:", card);
-    // Show menu or trigger logic here
-  }
-});
-
 
 
 document.addEventListener('click', function (e) {
@@ -61,3 +53,23 @@ function editCard(cardId, title, description) {
   cardTitleElem.innerText = title;
   cardContentElem.innerText = description;
 }
+
+
+socket.on('update-cards', (title, description, person, cardId) => {
+  addCardToList(title, description, person, cardId);
+});
+
+
+socket.on('card-deletion', (cardId) => {
+  document.getElementById(cardId).remove();
+});
+
+
+socket.on('card-edit-complete', (cardId, title, description, person) => {
+  const card = document.getElementById(cardId);
+  const header = card.querySelector('h2');
+  const content = card.querySelector('p');
+
+  header.innerText = `${title} - ${uppercaseFirstLetter(person)}`;
+  content.innerHTML = description;
+});

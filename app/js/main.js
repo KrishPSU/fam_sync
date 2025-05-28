@@ -165,7 +165,7 @@ ping_btn.addEventListener('click', async() => {
   hide(today_wrapper);
   hide(noti_sent);
   hide(ping_error);
-  show(ping_form);
+  // show(ping_form);
   show(ping_wrapper);
   hide(family_wrapper);
 });

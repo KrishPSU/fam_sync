@@ -1,5 +1,7 @@
 const new_task_button = document.querySelector('#new-task-btn');
 const close_new_task_modal_button = document.querySelector('#close-task-modal-btn');
+const task_form = document.getElementById('taskForm');
+const delete_task_at_end_of_day_toggle = task_form.querySelector('input[name="deleteAtEnd"]');
 
 
 
@@ -21,21 +23,23 @@ function close_new_task_modal() {
 }
 
 
-document.getElementById('taskForm').addEventListener('submit', function(e) {
+task_form.addEventListener('submit', function(e) {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(this));
 
   console.log(`Task added:\n${data.title}`);
   // createClientTask(data.title);
-  socket.emit('new-task', data.title, me);
+  socket.emit('new-task', data.title, me, delete_task_at_end_of_day_toggle.checked);
   close_new_task_modal();
   this.reset();
 });
 
 
-// function createClientTask(task) {
-//   const label_elem = document.createElement('label');
-//   label_elem.classList.add("task-item");
-//   label_elem.innerHTML = `<input type="checkbox"> ${task}`;
-//   my_tasks_list.appendChild(label_elem);
-// }
+
+delete_task_at_end_of_day_toggle.addEventListener('click', () => {
+  if (delete_task_at_end_of_day_toggle.checked) {
+    task_form.querySelector('.label').innerText = "Delete at end of day (server will delete it)";
+  } else {
+    task_form.querySelector('.label').innerText = "Stay until self delete (only you can delete it)";
+  }
+});

@@ -383,46 +383,108 @@ io.on("connection", function (socket) {
     // console.log(subscription);
   });
 
-  socket.on('pingUser', (to, from, title, message) => {
-    console.log(`trying to send to ${to} | ${title} --> ${message}`);
+  // socket.on('pingUser', (to, from, title, message) => {
+  //   console.log(`trying to send to ${to} | ${title} --> ${message}`);
 
-    if (to == "all") {
-      // socket.emit('client-print', subscriptions);
-      chavans.forEach((person) => {
-        if (person == from.toLowerCase()) return;
-        sendPing(subscriptions[person], to, from, title, message);
-      });
+  //   if (to == "all") {
+  //     // socket.emit('client-print', subscriptions);
+  //     chavans.forEach((person) => {
+  //       if (person == from.toLowerCase()) return;
+  //       sendPing(subscriptions[person], to, from, title, message);
+  //     });
+  //   } else {
+  //     const subscription = subscriptions[to];
+  //     sendPing(subscription, to, from, title, message);
+  //   } 
+  // });
+
+
+
+  socket.on('pingUser', async (to, title, message) => {
+    const payload = JSON.stringify({ title, body: message });
+
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('subscription')
+      .eq('name', to)
+      .single();
+
+    if (error || !data) {
+      socket.emit('not-registered-for-notis', to);
+      return;
+    }
+
+    const success = await sendNotification(to, payload);
+
+    if (success) {
+      socket.emit('registered-and-sent', to);
     } else {
-      const subscription = subscriptions[to];
-      sendPing(subscription, to, from, title, message);
-    } 
+      socket.emit('not-registered-for-notis', to);
+    }
   });
 
 
-  async function sendPing(subscription, to, from, title, message) {
-    if (subscription) {
-      const formattedTitle = `${from} pinged you: ${title}`; // e.g. "Krish pinged you: Reminder"
-      const payload = JSON.stringify({
-        title: formattedTitle,
-        body: message
-      });
-      webPush.sendNotification(subscription, payload).catch(console.error);
-      console.log(`Noti sent to ${to}`);
-      socket.emit('registered-and-sent', to);
-      const { data, error } = await supabase
-        .from('messages')
-        .insert({ to: to, from: from, title: title, message: message })
 
-      if (error) {
-        console.error(error);
-      } else {
-        // return data;
+
+  // async function sendPing(subscription, to, from, title, message) {
+  //   if (subscription) {
+  //     const formattedTitle = `${from} pinged you: ${title}`; // e.g. "Krish pinged you: Reminder"
+  //     const payload = JSON.stringify({
+  //       title: formattedTitle,
+  //       body: message
+  //     });
+  //     webPush.sendNotification(subscription, payload).catch(console.error);
+  //     console.log(`Noti sent to ${to}`);
+  //     socket.emit('registered-and-sent', to);
+  //     const { data, error } = await supabase
+  //       .from('messages')
+  //       .insert({ to: to, from: from, title: title, message: message })
+
+  //     if (error) {
+  //       console.error(error);
+  //     } else {
+  //       // return data;
+  //     }
+  //   } else {
+  //     // console.log(`${to} is not registered : ${subscription}`);
+  //     socket.emit('not-registered-for-notis', to);
+  //   }
+  // }
+
+
+  // sendNotification with error handling
+  async function sendNotification(to, payload) {
+    const subscription = subscriptions[to]; // in-memory
+    if (!subscription) {
+      console.log(`${to} has no subscription`);
+      return false;
+    }
+
+    try {
+      await webPush.sendNotification(subscription, payload);
+      console.log(`✅ Notification sent to ${to}`);
+      return true;
+    } catch (err) {
+      console.error(`❌ Failed to send to ${to}:`, err.statusCode);
+
+      // Cleanup for expired or invalid subscription
+      if (err.statusCode === 410 || err.statusCode === 404) {
+        console.log(`🧹 Removing invalid subscription for ${to}`);
+
+        // Remove from Supabase
+        await supabase
+          .from('subscriptions')
+          .delete()
+          .eq('name', to);
+
+        // Remove from in-memory object
+        delete subscriptions[to];
       }
-    } else {
-      // console.log(`${to} is not registered : ${subscription}`);
-      socket.emit('not-registered-for-notis', to);
+
+      return false;
     }
   }
+
 
 
 

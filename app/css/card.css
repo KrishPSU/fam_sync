@@ -39,11 +39,6 @@
   white-space: pre-wrap;
 }
 
-
-
-
-
-
 .dots-menu {
   position: absolute;
   top: 35px;
@@ -90,7 +85,38 @@
   background-color: #ffecec;
 }
 
-
 .hidden {
   display: none;
+}
+
+body.dark-mode .card {
+  background: #23272a;
+  color: #e3e3e3;
+  border: 1px solid #444;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+body.dark-mode .card h2 {
+  color: #e3e3e3;
+}
+body.dark-mode .dots-button {
+  color: #bbb;
+}
+body.dark-mode .dots-button:hover {
+  color: #fff;
+}
+body.dark-mode .dots-menu {
+  background-color: #23272a;
+  border: 1px solid #444;
+}
+body.dark-mode .dots-menu button {
+  color: #e3e3e3;
+}
+body.dark-mode .dots-menu .edit-btn:hover {
+  background-color: #222;
+}
+body.dark-mode .dots-menu .delete-btn {
+  color: #ff6b6b;
+}
+body.dark-mode .dots-menu .delete-btn:hover {
+  background-color: #3a2323;
 }

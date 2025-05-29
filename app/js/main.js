@@ -203,6 +203,13 @@ function setDarkMode(enabled) {
     localStorage.setItem('darkMode', 'false');
     if (darkModeToggle) darkModeToggle.checked = false;
   }
+  // Force re-apply active class to current page button for correct style
+  if (typeof current_active_btn !== 'undefined' && current_active_btn) {
+    // Remove and re-add to trigger CSS
+    current_active_btn.classList.remove('active');
+    void current_active_btn.offsetWidth; // force reflow
+    current_active_btn.classList.add('active');
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {

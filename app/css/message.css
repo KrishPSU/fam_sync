@@ -39,7 +39,23 @@
   white-space: pre-wrap;
 }
 
-
+body.dark-mode .message {
+  background-color: #23272a;
+  border: 1px solid #444;
+  color: #e3e3e3;
+}
+body.dark-mode .message-title {
+  color: #e3e3e3;
+}
+body.dark-mode .message-timestamp {
+  color: #aaa;
+}
+body.dark-mode .message-from {
+  color: #bbb;
+}
+body.dark-mode .message-body {
+  color: #e3e3e3;
+}
 
 .no-messages {
   display: block;

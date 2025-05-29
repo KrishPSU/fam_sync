@@ -252,3 +252,48 @@ input[type=radio] {
 #sent_messages_wrapper {
   display: block;
 }
+
+body.dark-mode .ping {
+  background: #23272a;
+  color: #e3e3e3;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+body.dark-mode #pingForm input,
+body.dark-mode #pingForm select,
+body.dark-mode #pingForm textarea {
+  background: #181a1b;
+  color: #e3e3e3;
+  border: 1px solid #444;
+}
+body.dark-mode #pingForm button {
+  background-color: #007bff;
+  color: #fff;
+}
+body.dark-mode #pingForm button:hover {
+  background-color: #005fd1;
+}
+body.dark-mode .sent-box {
+  background: #23272a;
+  color: #e3e3e3;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+body.dark-mode .sent-box p {
+  color: #aaa;
+}
+body.dark-mode #send-another-btn {
+  background-color: #007bff;
+  color: #fff;
+}
+body.dark-mode #send-another-btn:hover {
+  background-color: #005fd1;
+}
+body.dark-mode .toggle {
+  background-color: #232c36;
+  border: 1px solid #222;
+}
+body.dark-mode .toggle-option {
+  color: #e3e3e3;
+}
+body.dark-mode .toggle-slider {
+  background-color: #007bff;
+}

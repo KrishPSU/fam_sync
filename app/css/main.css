@@ -24,6 +24,7 @@ body {
   max-width: 420px;
   margin: auto;
   padding-bottom: 2rem;
+  box-shadow: none !important;
 }
 
 /* Header */
@@ -298,4 +299,165 @@ input[type="checkbox"] {
   align-items: center;
   justify-content: space-between;
   padding: 6px 0;
+}
+
+/* Dark mode toggle switch */
+.dark-mode-toggle {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  z-index: 2;
+  gap: 4px;
+}
+.dark-mode-toggle input {
+  display: none;
+}
+.dark-mode-toggle .toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+}
+.dark-mode-toggle .slider {
+  width: 38px;
+  height: 20px;
+  background: #ccc;
+  border-radius: 20px;
+  position: relative;
+  transition: background 0.3s;
+  margin: 0 2px;
+}
+.dark-mode-toggle .slider:before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+.dark-mode-toggle input:checked + .slider {
+  background: #007bff;
+}
+.dark-mode-toggle input:checked + .slider:before {
+  transform: translateX(18px);
+  border: 1.5px solid #bbb;
+}
+body.dark-mode .dark-mode-toggle .slider:before {
+  border: 1.5px solid #fff;
+}
+
+/* Dark mode styles */
+body.dark-mode {
+  background-color: #181a1b;
+  color: #e3e3e3;
+}
+body.dark-mode header h1 {
+  color: #e3e3e3;
+}
+body.dark-mode .date {
+  color: #aaa;
+}
+body.dark-mode .app-container,
+body.dark-mode .card,
+body.dark-mode .family,
+body.dark-mode .ping,
+body.dark-mode .modal-content,
+body.dark-mode .sent-box {
+  background: #23272a !important;
+  color: #e3e3e3;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+body.dark-mode .card,
+body.dark-mode .family,
+body.dark-mode .ping {
+  border-color: #222;
+}
+body.dark-mode .card h2,
+body.dark-mode .family-member h2 {
+  color: #e3e3e3;
+}
+body.dark-mode .pages-buttons {
+  background: #23272a;
+  border-top: 1px solid #222;
+}
+body.dark-mode .pages-buttons button {
+  background: #181a1b;
+  color: #e3e3e3;
+  border: 1px solid #23272a;
+}
+body.dark-mode .pages-buttons button.active {
+  background: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+body.dark-mode .pages-buttons button:hover {
+  background: #23272a;
+}
+body.dark-mode .new-card-button,
+body.dark-mode .add-to-card-button,
+body.dark-mode .add-button {
+  background: #007bff;
+  color: #fff;
+}
+body.dark-mode .new-card-button:hover,
+body.dark-mode .add-to-card-button:hover,
+body.dark-mode .add-button:hover {
+  background: #005fd1;
+}
+body.dark-mode .delete-task-and-event-btn {
+  color: #ff6b6b;
+}
+body.dark-mode .delete-task-and-event-btn:hover {
+  background: #3a2323;
+}
+body.dark-mode .card label,
+body.dark-mode .card li,
+body.dark-mode .task-item,
+body.dark-mode .event-item {
+  color: #e3e3e3;
+}
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background: #23272a;
+  color: #e3e3e3;
+  border: 1px solid #444;
+}
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+}
+body.dark-mode .dots-menu {
+  background: #23272a;
+  border: 1px solid #444;
+}
+body.dark-mode .dots-menu button {
+  color: #e3e3e3;
+}
+body.dark-mode .dots-menu .edit-btn:hover {
+  background: #222;
+}
+body.dark-mode .dots-menu .delete-btn {
+  color: #ff6b6b;
+}
+body.dark-mode .dots-menu .delete-btn:hover {
+  background: #3a2323;
+}
+body.dark-mode .no-messages {
+  color: #aaa;
+}
+body.dark-mode .app-container {
+  box-shadow: none !important;
 }

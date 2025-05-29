@@ -5,6 +5,10 @@ body {
   padding: 1rem;
 }
 
+body.dark-mode {
+  background-color: #23272a;
+}
+
 .family {
   display: none;
   max-width: 420px;
@@ -15,6 +19,13 @@ body {
   border-radius: 16px;
   padding: 1rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+body.dark-mode .family {
+  background-color: #23272a;
+  color: #e3e3e3;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  border-color: #222;
 }
 
 header {
@@ -44,9 +55,18 @@ nav {
   transition: all 0.3s;
 }
 
+body.dark-mode .tab {
+  color: #e3e3e3;
+}
+
 .tab.selected {
   border-bottom: 2px solid #007bff;
   color: #007bff;
+}
+
+body.dark-mode .tab.selected {
+  color: #90c4ff;
+  border-bottom: 2px solid #007bff;
 }
 
 .add-button {
@@ -61,15 +81,32 @@ nav {
   margin-left: 0.5rem;
 }
 
+body.dark-mode .add-button {
+  background-color: #007bff;
+  color: #fff;
+}
+
+body.dark-mode .add-button:hover {
+  background-color: #005fd1;
+}
+
 .family-member {
   border-top: 1px solid #eee;
   padding-top: 1rem;
   margin-top: 1rem;
 }
 
+body.dark-mode .family-member {
+  border-top: 1px solid #333;
+}
+
 .family-member h2 {
   margin-bottom: 0.5rem;
   font-size: 1.1rem;
+}
+
+body.dark-mode .family-member h2 {
+  color: #e3e3e3;
 }
 
 .family-member ul {
@@ -82,9 +119,6 @@ nav {
   margin-bottom: 0.4rem;
   font-size: 0.95rem;
 }
-
-
-
 
 .task {
   font-size: 1rem;
@@ -99,12 +133,13 @@ nav {
   opacity: 0.7;
 }
 
-
-
-
 .empty_family_item {
   width: 100%;
   text-align: center;
   font-style: italic;
   opacity: 0.7;
+}
+
+body.dark-mode .empty_family_item {
+  color: #aaa;
 }

@@ -23,7 +23,7 @@ body {
 .app-container {
   max-width: 420px;
   margin: auto;
-  margin-bottom: 90px;
+  padding-bottom: 2rem;
   box-shadow: none !important;
 }
 
@@ -171,8 +171,33 @@ input[type="checkbox"] {
 }
 
 .pages-buttons {
+  /* position: fixed;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  margin: 1rem 0; */
+
+  
+  /* position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  justify-self: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.05);
+  z-index: 100; */
+
+
   position: fixed;
-  bottom: 20px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -238,7 +263,6 @@ input[type="checkbox"] {
   height: calc(100vh - 180px);
   overflow-y: auto;
   margin: auto;
-  margin-bottom: 90px;
 }
 
 

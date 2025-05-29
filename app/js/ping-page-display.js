@@ -57,7 +57,7 @@ socket.on('messages-retrieved', (messagesData) =>{
       `;
       sent_messages_wrapper.innerHTML += message;
       sentMessages++;
-    } else if (recepient == me) {
+    } else if (recepient == me || recepient == 'all') {
       const message = `
         <div class="message">
           <div class="message-header">

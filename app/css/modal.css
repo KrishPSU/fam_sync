@@ -223,3 +223,30 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(16px);
 }
+
+body.dark-mode .modal-content {
+  background: #23272a;
+  color: #e3e3e3;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+body.dark-mode .modal-content input,
+body.dark-mode .modal-content select,
+body.dark-mode .modal-content textarea {
+  background: #181a1b;
+  color: #e3e3e3;
+  border: 1px solid #444;
+}
+body.dark-mode .modal-content input:focus,
+body.dark-mode .modal-content select:focus,
+body.dark-mode .modal-content textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+}
+body.dark-mode .submit-btn {
+  background: #007bff;
+  color: #fff;
+}
+body.dark-mode .cancel-btn {
+  background: #444;
+  color: #e3e3e3;
+}

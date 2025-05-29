@@ -23,7 +23,7 @@ body {
 .app-container {
   max-width: 420px;
   margin: auto;
-  padding-bottom: 2rem;
+  padding-bottom: 90px;
   box-shadow: none !important;
 }
 
@@ -238,6 +238,7 @@ input[type="checkbox"] {
   height: calc(100vh - 180px);
   overflow-y: auto;
   margin: auto;
+  padding-bottom: 90px;
 }
 
 

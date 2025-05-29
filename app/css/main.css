@@ -3,6 +3,13 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a, .tab, .add-button {
+  user-select: none;           /* Standard */
+  -webkit-user-select: none;   /* Safari / iOS */
+  -webkit-touch-callout: none; /* Disable callout menu on iOS */
 }
 
 body {

@@ -103,7 +103,7 @@ app.get('/api/cleanup', async (req, res) => {
       const { error } = await supabase
         .from(table)
         .delete()
-        .not('id', 'is', null); // UUID-safe
+        .eq('delete_at_day_end', true); // UUID-safe
 
       if (error) {
         console.error(`❌ Error deleting ${table}:`, error.message);
@@ -130,10 +130,10 @@ io.on("connection", function (socket) {
 
 
 
-  socket.on('new-event', async(title, time, person) => {
+  socket.on('new-event', async(title, time, person, deleteAtEndOfDay) => {
     const { data, error } = await supabase
       .from('events')
-      .insert({ title: title, time: time, person: person })
+      .insert({ title: title, time: time, person: person, delete_at_day_end: deleteAtEndOfDay })
       .select()
 
     if (error) {
@@ -145,10 +145,10 @@ io.on("connection", function (socket) {
 
 
 
-  socket.on('new-task', async(task, person) => {
+  socket.on('new-task', async(task, person, deleteAtEndOfDay) => {
     const { data, error } = await supabase
       .from('tasks')
-      .insert({ title: task, person: person })
+      .insert({ title: task, person: person, delete_at_day_end: deleteAtEndOfDay })
       .select()
 
     if (error) {
@@ -160,10 +160,10 @@ io.on("connection", function (socket) {
 
 
 
-  socket.on('new-card', async(title, description, person) => {
+  socket.on('new-card', async(title, description, person, deleteAtEndOfDay) => {
     const { data, error } = await supabase
       .from('cards')
-      .insert({ title: title, description: description, person: person })
+      .insert({ title: title, description: description, person: person, delete_at_day_end: deleteAtEndOfDay })
       .select()
 
     if (error) {

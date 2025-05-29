@@ -1,4 +1,5 @@
 const close_edit_card_modal_button = document.querySelector('#close-edit-card-modal-btn');
+const edit_card_form = document.getElementById('editCardForm');
 let currentCardBeingEditedId;
 
 close_edit_card_modal_button.addEventListener('click', () => {
@@ -18,7 +19,7 @@ function close_edit_card_modal() {
 }
 
 
-document.getElementById('editCardForm').addEventListener('submit', function(e) {
+edit_card_form.addEventListener('submit', function(e) {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(this));
   let title = data.title;

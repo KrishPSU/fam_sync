@@ -97,7 +97,7 @@ app.get('/api/cleanup', async (req, res) => {
   }
 
   try {
-    const deleteTables = ['tasks', 'events', 'cards'];
+    const deleteTables = ['tasks', 'events', 'cards', 'messages'];
 
     for (const table of deleteTables) {
       const { error } = await supabase

@@ -189,3 +189,29 @@ socket.on('test', (data) => {
 socket.on('client-print', (data) => {
   console.log(data);
 });
+
+// Dark mode toggle logic
+const darkModeToggle = document.getElementById('darkModeToggle');
+
+function setDarkMode(enabled) {
+  if (enabled) {
+    document.body.classList.add('dark-mode');
+    localStorage.setItem('darkMode', 'true');
+    if (darkModeToggle) darkModeToggle.checked = true;
+  } else {
+    document.body.classList.remove('dark-mode');
+    localStorage.setItem('darkMode', 'false');
+    if (darkModeToggle) darkModeToggle.checked = false;
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const darkPref = localStorage.getItem('darkMode');
+  setDarkMode(darkPref === 'true');
+  if (darkModeToggle) {
+    darkModeToggle.checked = document.body.classList.contains('dark-mode');
+    darkModeToggle.addEventListener('change', (e) => {
+      setDarkMode(e.target.checked);
+    });
+  }
+});

@@ -61,6 +61,9 @@ function renderEvents(events, family) {
       </div>
     `;
   });
+  if (family_events_wrapper.innerHTML == "") {
+    family_events_wrapper.innerHTML = '<p class="empty_family_item">No events 🗓️</p>';
+  }
 }
 
 
@@ -101,6 +104,9 @@ function renderTasks(tasks, family) {
       </div>
     `;
   });
+  if (family_tasks_wrapper.innerHTML == "") {
+    family_tasks_wrapper.innerHTML = '<p class="empty_family_item">No tasks 📋</p>';
+  }
 }
 
 

@@ -1,6 +1,7 @@
 const new_event_button = document.querySelector('#new-event-btn');
 const close_new_event_modal_button = document.querySelector('#close-event-modal-btn');
-
+const event_form = document.getElementById('eventForm');
+const delete_event_at_end_of_day_toggle = event_form.querySelector('input[name="deleteAtEnd"]');
 
 
 new_event_button.addEventListener('click', () => {
@@ -27,7 +28,7 @@ function formatTimeWithAMPM(time24) {
   return `${hour12}:${minute.toString().padStart(2, '0')} ${ampm}`;
 }
 
-document.getElementById('eventForm').addEventListener('submit', function(e) {
+event_form.addEventListener('submit', function(e) {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(this));
   const formattedTime = formatTimeWithAMPM(data.time);
@@ -36,7 +37,7 @@ document.getElementById('eventForm').addEventListener('submit', function(e) {
   // alert(`Event added:\n${data.title} at ${formattedTime}`);
   console.log(`Event added:\n${data.title} at ${formattedTime}`);
   // createClientEvent(data.title, formattedTime);
-  socket.emit('new-event', data.title, formattedTime, me);
+  socket.emit('new-event', data.title, formattedTime, me, delete_event_at_end_of_day_toggle.checked);
   close_new_event_modal();
   this.reset();
 });
@@ -47,9 +48,10 @@ socket.on('event-created-successfully', (event, eventId, time) => {
 });
 
 
-// function createClientEvent(event, time) {
-//   const li_elem = document.createElement('li');
-//   li_elem.classList.add("event");
-//   li_elem.innerHTML = `<strong>${time}</strong> — ${event}`;
-//   my_events_list.appendChild(li_elem);
-// }
+delete_event_at_end_of_day_toggle.addEventListener('click', () => {
+  if (delete_event_at_end_of_day_toggle.checked) {
+    event_form.querySelector('.label').innerText = "Delete at end of day (server will delete it)";
+  } else {
+    event_form.querySelector('.label').innerText = "Stay until self delete (only you can delete it)";
+  }
+});

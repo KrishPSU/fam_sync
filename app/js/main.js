@@ -94,7 +94,7 @@ function addCardToList(title, description, cardOwner, cardId) {
 
 socket.on('data-for-person', (events, tasks, cards) => {
 
-  // console.log(events, tasks, cards);
+  console.log(events, tasks, cards);
 
   my_events_list.innerHTML = "";
   my_tasks_list.innerHTML = "";
@@ -145,7 +145,7 @@ ping_btn.addEventListener('click', async() => {
   // register();
 
   const permission = await Notification.requestPermission();
-  // console.log("Permission result:", permission);
+  console.log("Permission result:", permission);
 
   if (permission === 'granted') {
     const reg = await navigator.serviceWorker.register('/sw.js');

@@ -82,7 +82,9 @@ function addCardToList(title, description, cardOwner, cardId) {
     innerHtml = `
       <section class="card" id=${cardId}>
         <h2>${title} - ${uppercaseFirstLetter(cardOwner)}</h2>
-        <p>${description}</p>
+        <div class="card-content">
+          <p>${description}</p>
+        </div>
       </section>
     `;
   }

@@ -32,6 +32,18 @@ app.use(express.static(path.join(__dirname,'app')));
 app.use(helmet());
 app.use(limiter);
 
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", "https://api.weather.gov"],
+      imgSrc: ["'self'", "data:", "https://img.icons8.com"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"], // if needed for inline styles
+    },
+  })
+);
+
 // app.use((req, res, next) => {
 //     res.setHeader('Access-Control-Allow-Origin', '*');
 //     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -42,7 +54,7 @@ app.use(limiter);
 const chavans = ["sandeep", "smita", "aarav", "krish"];
 
 app.get('/', function(req,res){
-  res.sendFile(path.join(__dirname, 'app', 'pages', 'signin.html'));
+  res.sendFile(path.join(__dirname, 'app', 'pages', 'landing-page.html'));
 });
 app.get('/signin', function(req,res){
   res.sendFile(path.join(__dirname, 'app', 'pages', 'signin.html'));

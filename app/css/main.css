@@ -467,3 +467,6 @@ body.dark-mode .no-messages {
 body.dark-mode .app-container {
   box-shadow: none !important;
 }
+body.dark-mode .delete-end-toggle .label {
+  color: #e3e3e3;
+}

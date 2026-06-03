@@ -28,7 +28,7 @@ body {
 
 body:has(.ai-assistant-window:not(.hidden)),
 body.ai-panel-open {
-  padding-right: 360px;
+  padding-right: 376px;
 }
 
 body:has(.ai-assistant-window:not(.hidden)) .pages-buttons,

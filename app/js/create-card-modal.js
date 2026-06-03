@@ -38,8 +38,8 @@ card_form.addEventListener('submit', function(e) {
 
 delete_card_at_end_of_day_toggle.addEventListener('click', () => {
   if (delete_card_at_end_of_day_toggle.checked) {
-    card_form.querySelector('.label').innerText = "Delete at end of day (server will delete it)";
+    card_form.querySelector('.label').innerText = "Auto delete at 12 AM";
   } else {
-    card_form.querySelector('.label').innerText = "Stay until self delete (only you can delete it)";
+    card_form.querySelector('.label').innerText = "Stay until self delete";
   }
 });

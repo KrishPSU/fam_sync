@@ -50,8 +50,8 @@ socket.on('event-created-successfully', (event, eventId, time) => {
 
 delete_event_at_end_of_day_toggle.addEventListener('click', () => {
   if (delete_event_at_end_of_day_toggle.checked) {
-    event_form.querySelector('.label').innerText = "Delete at end of day (server will delete it)";
+    event_form.querySelector('.label').innerText = "Auto delete at 12 AM";
   } else {
-    event_form.querySelector('.label').innerText = "Stay until self delete (only you can delete it)";
+    event_form.querySelector('.label').innerText = "Stay until self delete";
   }
 });

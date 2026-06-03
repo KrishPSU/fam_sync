@@ -38,8 +38,8 @@ task_form.addEventListener('submit', function(e) {
 
 delete_task_at_end_of_day_toggle.addEventListener('click', () => {
   if (delete_task_at_end_of_day_toggle.checked) {
-    task_form.querySelector('.label').innerText = "Delete at end of day (server will delete it)";
+    task_form.querySelector('.label').innerText = "Auto delete at 12 AM";
   } else {
-    task_form.querySelector('.label').innerText = "Stay until self delete (only you can delete it)";
+    task_form.querySelector('.label').innerText = "Stay until self delete";
   }
 });

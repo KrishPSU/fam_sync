@@ -57,6 +57,42 @@
   gap: 0.75rem;
 }
 
+.ai-welcome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem 1rem;
+}
+
+.ai-diamond {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #4a90e2, #007bff);
+  transform: rotate(45deg);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 18px rgba(0, 123, 255, 0.3);
+}
+
+.ai-diamond svg {
+  transform: rotate(-45deg);
+  color: #fff;
+}
+
+.ai-welcome-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #555;
+  text-align: center;
+  margin: 0;
+  margin-top: 20px;
+}
+
 .ai-form {
   display: flex;
   gap: 0.5rem;
@@ -124,6 +160,14 @@ body.dark-mode #close-ai-btn:hover {
 
 body.dark-mode .ai-messages {
   color: #e3e3e3;
+}
+
+body.dark-mode .ai-welcome-text {
+  color: #aaa;
+}
+
+body.dark-mode .ai-diamond {
+  box-shadow: 0 4px 18px rgba(0, 123, 255, 0.2);
 }
 
 body.dark-mode .ai-form {

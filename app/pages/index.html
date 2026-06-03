@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>FamSync</title>
+
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://api.weather.gov;">
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  
+
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script defer src="../js/main.js"></script>
+  <script defer src="../js/pages.js"></script>
+  <script defer src="../js/date.js"></script>
+  <script defer src="../js/weather.js"></script>
+  <script defer src="../js/new-event-modal.js"></script>
+  <script defer src="../js/new-task-modal.js"></script>
+  <script defer src="../js/create-card-modal.js"></script>
+  <script defer src="../js/family.js"></script>
+  <script defer src="../js/ping.js"></script>
+  <script defer src="../js/tasks.js"></script>
+  <script defer src="../js/card.js"></script>
+  <script defer src="../js/edit-card-modal.js"></script>
+  <script defer src="../js/delete-task-and-event.js"></script>
+  <script defer src="../js/ping-page-display.js"></script>
+
+
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/modal.css">
+  <link rel="stylesheet" href="../css/family.css">
+  <link rel="stylesheet" href="../css/ping.css">
+  <link rel="stylesheet" href="../css/card.css">
+  <link rel="stylesheet" href="../css/message.css">
+  <link rel="stylesheet" href="../css/ai-assistant.css">
+
+</head>
+<body>
+  <div class="app-container">
+
+    <header>
+      <div class="header-container">
+        <label class="dark-mode-toggle" title="Toggle dark mode">
+          <span class="toggle-icon sun" aria-label="Light mode">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f7c948" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </span>
+          <input type="checkbox" id="darkModeToggle" />
+          <span class="slider"></span>
+          <span class="toggle-icon moon" aria-label="Dark mode">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b3c0e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+          </span>
+        </label>
+        <h1>FamSync</h1>
+        <button class="new-card-button">+</button>
+      </div>
+      <p id="dateDisplay" class="date"></p>
+    </header>
+
+    <div class="today">
+      <div id="my-cards">
+        <section class="card" id="events">
+          <div class="card-top">
+            <h2>Events Today</h2>
+            <button class="add-to-card-button" id="new-event-btn">+</button>
+          </div>
+          <ul id="my-events">   
+            <!-- <li class="event-item">
+              <span><strong>3:00 PM</strong> — Soccer Practice</span>
+              <button class="delete-task-and-event-btn">✕</button>
+            </li> -->
+          </ul>
+        </section>
+
+        <section class="card" id="tasks">
+          <div class="card-top">
+            <h2>Tasks To Do</h2>
+            <button class="add-to-card-button" id="new-task-btn">+</button>
+          </div>
+          <div class="checkbox-group" id="my-tasks">
+            <!-- <div class="task-item">
+              <label>
+                <input type="checkbox" />
+                <span>Do laundry</span>
+              </label>
+              <button class="delete-task-and-event-btn">✕</button>
+            </div> -->
+          </div>
+        </section>
+      </div>
+
+      <!-- <section class="card">
+        <h2>Dinner</h2>
+        <p>🌮 Tacos – check pantry for tortillas</p>
+      </section> -->
+
+      <!-- <section class="card weather-card">
+        <p>🌦️ High of 67°F. Light rain at 4 PM.</p>
+      </section> -->
+
+      <section class="card weather-card">
+        <h2>Weather</h2>
+        <p id="weatherBox">Loading..</p>
+      </section>
+    </div>
+
+    <div class="ping">
+      <div class="sent-box">
+        <h1>✅ Ping Sent!</h1>
+        <p>Your message was delivered successfully!</p>
+        <button id="send-another-btn">Send another</button>
+      </div>
+
+      <div class="toggle-wrapper">
+        <input type="radio" name="viewToggle" id="create-toggle" checked>
+        <input type="radio" name="viewToggle" id="messages-toggle">
+        
+        <div class="toggle">
+          <label for="create-toggle" class="toggle-option">Create</label>
+          <label for="messages-toggle" class="toggle-option">Messages</label>
+          <div class="toggle-slider"></div>
+        </div>
+      </div>
+
+      <form id="pingForm">
+        <p id="ping-error"><span></span> is not yet registed to recieve pings yet</p>
+        <label for="member">Select Member</label>
+        <select id="member" required>
+          <!-- <option value="">-- Choose --</option> -->
+        </select>
+
+        <label for="title">Title</label>
+        <input type="text" id="title" placeholder="Reminder" required />
+
+        <label for="message">Message</label>
+        <textarea id="message" rows="4" placeholder="Don't forget to walk the dog!" required></textarea>
+
+        <button id="ping-submit-btn">Ping</button>
+      </form>
+
+      <div id="messages-section">   
+        <div class="messages-container">
+          <nav class="messages-nav">
+            <button id="sent_tab" class="tab selected">Sent</button>
+            <button id="received_tab" class="tab">Received</button>
+          </nav>
+          <div id="sent_messages_wrapper" class="messages-wrapper">
+            <!-- <div class="no-messages" id="no-sent-messages">
+              <p>No messages yet 📭</p>
+            </div> -->
+            <!-- <div class="message">
+              <div class="message-header">
+                <strong class="message-title">Reminder</strong>
+                <span class="message-timestamp">May 28, 2:15 PM</span>
+              </div>
+              <p class="message-from">From: Ava</p>
+              <p class="message-body">Don't forget to take the trash out before dinner!</p>
+            </div> -->
+          </div>
+          <div id="received_messages_wrapper" class="messages-wrapper">
+            <!-- <div class="no-messages" id="no-received-messages">
+              <p>No messages yet 📭</p>
+            </div> -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="family">
+      <header>
+        <nav>
+          <button id="all_tab" class="tab selected">All</button>
+          <button id="events_tab" class="tab">Events</button>
+          <button id="tasks_tab" class="tab">Tasks</button>
+          <!-- <button class="add-button">+</button> -->
+        </nav>
+      </header>
+
+      <div class="family-events-and-tasks"></div>
+
+      <div class="family-tasks"></div>
+
+      <div class="family-events">
+        <!-- <div class="family-member">
+          <h2>Sophia</h2>
+          <ul>
+            <li>Do homework</li>
+            <li>11:00 AM Dentist appointment</li>
+            <li>5:00 PM Swim practice</li>
+          </ul>
+        </div> -->
+      </div>
+    </div>
+
+    <div class="pages-buttons">
+      <button id="today-button" class="active">Today</button>
+      <button id="ping-button">Ping</button>
+      <button id="family-button">Family</button>
+    </div>
+  </div>
+  
+  <div class="AI-assistant">
+
+  </div>
+
+
+
+  <!-- New Event Modal -->
+  <div id="eventModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>New Event</h2>
+      <form id="eventForm">
+        <label>Title
+          <input type="text" name="title" required />
+        </label>
+
+        <label>Time
+          <input type="time" name="time" required />
+        </label>
+
+        <!-- <div class="toggle-row">
+          <span class="toggle-label-left">Event</span>
+          <label class="switch">
+            <input type="checkbox" name="isTask" />
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-label-right">Task</span>
+        </div> -->
+
+        <div class="delete-end-toggle">
+          <label class="switch">
+            <input type="checkbox" name="deleteAtEnd" checked>
+            <span class="slider"></span>
+          </label>
+          <span class="label">Delete at end of day (server will delete it)</span>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="submit" class="submit-btn">Add</button>
+          <button type="button" id="close-event-modal-btn" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+
+  <!-- New Task Modal -->
+  <div id="taskModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>New Task</h2>
+      <form id="taskForm">
+        <label>Task
+          <input type="text" name="title" required />
+        </label>
+
+        <div class="delete-end-toggle">
+          <label class="switch">
+            <input type="checkbox" name="deleteAtEnd" checked>
+            <span class="slider"></span>
+          </label>
+          <span class="label">Delete at end of day (server will delete it)</span>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="submit" class="submit-btn">Add</button>
+          <button type="button" id="close-task-modal-btn" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+
+  <!-- New Card Modal -->
+  <div id="cardModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>New Card</h2>
+      <form id="cardForm">
+        <label>Title
+          <input type="text" name="title" required />
+        </label>
+
+        <label>Description
+          <!-- <input type="text" name="description" required /> -->
+           <textarea name="description" id="card-description" rows="4" placeholder="Add details..." required></textarea>
+        </label>
+
+        <div class="delete-end-toggle">
+          <label class="switch">
+            <input type="checkbox" name="deleteAtEnd" checked>
+            <span class="slider"></span>
+          </label>
+          <span class="label">Delete at end of day (server will delete it)</span>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="submit" class="submit-btn">Add</button>
+          <button type="button" id="close-card-modal-btn" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <div id="editCardModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Edit Card</h2>
+      <form id="editCardForm">
+        <label>Title
+          <input id="edit-title" type="text" name="title" required />
+        </label>
+
+        <label>Description
+          <textarea name="description" id="edit-desc" rows="4" placeholder="Add details..." required></textarea>
+        </label>
+
+        <div class="modal-buttons">
+          <button type="submit" id="done-editing-card" class="submit-btn">Save</button>
+          <button type="button" id="close-edit-card-modal-btn" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+
+
+</body>
+</html>

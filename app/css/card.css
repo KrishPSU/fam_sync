@@ -37,7 +37,7 @@
   margin-top: 0.75rem;
 }
 .card-content p {
-  /* white-space: unset; */
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
 }

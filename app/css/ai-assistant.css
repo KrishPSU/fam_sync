@@ -1,2 +1,142 @@
 
+.ai-assistant-window {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 360px;
+  height: 100vh;
+  background: #fff;
+  border-left: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
+}
 
+.ai-assistant-window.hidden {
+  display: none;
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.ai-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d2d2d;
+}
+
+#close-ai-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #777;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+#close-ai-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ai-form {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.ai-form input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ai-form input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+}
+
+.ai-form button[type="submit"] {
+  padding: 0.6rem 1rem;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.ai-form button[type="submit"]:hover {
+  background: #005fd1;
+}
+
+/* Dark mode */
+body.dark-mode .ai-assistant-window {
+  background: #23272a;
+  border-left: 1px solid #333;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .ai-header {
+  border-bottom: 1px solid #333;
+}
+
+body.dark-mode .ai-header h2 {
+  color: #e3e3e3;
+}
+
+body.dark-mode #close-ai-btn {
+  color: #aaa;
+}
+
+body.dark-mode #close-ai-btn:hover {
+  background: #2d3235;
+  color: #e3e3e3;
+}
+
+body.dark-mode .ai-messages {
+  color: #e3e3e3;
+}
+
+body.dark-mode .ai-form {
+  border-top: 1px solid #333;
+}
+
+body.dark-mode .ai-form input {
+  background: #181a1b;
+  color: #e3e3e3;
+  border: 1px solid #444;
+}
+
+body.dark-mode .ai-form input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}

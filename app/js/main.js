@@ -4,6 +4,18 @@ const socket = io();
 const today_btn = document.getElementById('today-button');
 const ping_btn = document.getElementById('ping-button');
 const family_btn = document.getElementById('family-button');
+const ai_btn = document.getElementById('ai-button');
+
+const aiWindow = document.querySelector('.ai-assistant-window');
+const closeAiBtn = document.getElementById('close-ai-btn');
+
+ai_btn.addEventListener('click', () => {
+  aiWindow.classList.remove('hidden');
+});
+
+closeAiBtn.addEventListener('click', () => {
+  aiWindow.classList.add('hidden');
+});
 
 let me;
 window.addEventListener('load', () => {

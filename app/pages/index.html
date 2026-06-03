@@ -55,7 +55,10 @@
           </span>
         </label>
         <h1>FamSync</h1>
-        <button class="new-card-button">+</button>
+        <div class="header-actions">
+          <button id="ai-button">AI</button>
+          <button class="new-card-button">+</button>
+        </div>
       </div>
       <p id="dateDisplay" class="date"></p>
     </header>
@@ -201,11 +204,21 @@
       <button id="family-button">Family</button>
     </div>
   </div>
-  
-  <div class="AI-assistant">
 
+
+  <div class="ai-assistant-window hidden">
+    <div class="ai-header">
+      <h2>AI Assistant</h2>
+      <button id="close-ai-btn">✕</button>
+    </div>
+    <div class="ai-messages">
+      <!-- AI and user messages will appear here -->
+    </div>
+    <form id="aiForm" class="ai-form">
+      <input type="text" id="aiInput" placeholder="Ask me anything..." required />
+      <button type="submit">Send</button>
+    </form>
   </div>
-
 
 
   <!-- New Event Modal -->

@@ -21,8 +21,7 @@ body {
 
 /* Container */
 .app-container {
-  /* max-width: 420px; */
-  width: 100%;
+  max-width: 420px;
   margin: auto;
   padding-bottom: 2rem;
   box-shadow: none !important;
@@ -179,6 +178,8 @@ input[type="checkbox"] {
   gap: 1rem;
   padding: 0.5rem;
   margin: 1rem 0; */
+
+  
   /* position: fixed;
   bottom: 0;
   left: 0;
@@ -193,6 +194,8 @@ input[type="checkbox"] {
   padding: 0.5rem 1rem;
   box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.05);
   z-index: 100; */
+
+
   position: fixed;
   bottom: 0;
   left: 50%;
@@ -204,11 +207,10 @@ input[type="checkbox"] {
   border-top: 1px solid #ddd;
   display: flex;
   justify-content: space-around;
-  padding: 0.5rem 1rem 1rem 1rem;
+  padding: 0.5rem 1rem;
   box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.05);
   z-index: 5;
   border-radius: 16px 16px 0 0;
-  background-color: aliceblue;
 }
 
 .pages-buttons button {
@@ -257,11 +259,10 @@ input[type="checkbox"] {
 
 .today {
   display: block;
-  /* max-width: 420px; */
-  /* height: calc(100vh - 180px); */
+  max-width: 420px;
+  height: calc(100vh - 180px);
   overflow-y: auto;
   margin: auto;
-  padding-bottom: 10px;
 }
 
 
@@ -392,7 +393,7 @@ body.dark-mode .family-member h2 {
   color: #e3e3e3;
 }
 body.dark-mode .pages-buttons {
-  background: #282d30;
+  background: #23272a;
   border-top: 1px solid #222;
 }
 body.dark-mode .pages-buttons button {
@@ -406,8 +407,7 @@ body.dark-mode .pages-buttons button.active {
   border-color: #007bff;
 }
 body.dark-mode .pages-buttons button:hover {
-  /* background: #23272a; */
-  opacity: 0.6;
+  background: #23272a;
 }
 body.dark-mode .new-card-button,
 body.dark-mode .add-to-card-button,
@@ -469,47 +469,4 @@ body.dark-mode .app-container {
 }
 body.dark-mode .delete-end-toggle .label {
   color: #e3e3e3;
-}
-
-/* Scrollbar — light mode */
-::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.18);
-  border-radius: 99px;
-  border-right: 5px solid transparent;
-  background-clip: padding-box;
-}
-::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.32);
-  background-clip: padding-box;
-}
-
-/* Scrollbar — dark mode */
-body.dark-mode ::-webkit-scrollbar-track {
-  background: transparent;
-}
-body.dark-mode ::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.14);
-  border-radius: 99px;
-  border-right: 5px solid transparent;
-  background-clip: padding-box;
-}
-body.dark-mode ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.28);
-  background-clip: padding-box;
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
-}
-body.dark-mode * {
-  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
 }

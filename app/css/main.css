@@ -521,6 +521,27 @@ body.dark-mode .delete-end-toggle .label {
   color: #e3e3e3;
 }
 
+@media (max-width: 600px) {
+  .new-card-button {
+    bottom: 75px;
+  }
+
+  body:has(.ai-assistant-window:not(.hidden)),
+  body.ai-panel-open {
+    padding-right: 1.2rem;
+  }
+
+  body:has(.ai-assistant-window:not(.hidden)) .pages-buttons,
+  body.ai-panel-open .pages-buttons {
+    left: 50%;
+  }
+
+  body:has(.ai-assistant-window:not(.hidden)) .new-card-button,
+  body.ai-panel-open .new-card-button {
+    right: 20px;
+  }
+}
+
 /* Scrollbar — light mode */
 ::-webkit-scrollbar {
   width: 9px;

@@ -11,10 +11,13 @@
   flex-direction: column;
   z-index: 10;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
+  transform: translateX(0);
+  transition: transform 0.3s ease;
 }
 
 .ai-assistant-window.hidden {
-  display: none;
+  transform: translateX(100%);
+  pointer-events: none;
 }
 
 .ai-header {
@@ -183,4 +186,11 @@ body.dark-mode .ai-form input {
 body.dark-mode .ai-form input:focus {
   border-color: #007bff;
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+@media (max-width: 600px) {
+  .ai-assistant-window {
+    width: 100vw;
+    left: 0;
+  }
 }

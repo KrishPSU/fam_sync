@@ -36,6 +36,11 @@ body.ai-panel-open .pages-buttons {
   left: calc(50% - 180px);
 }
 
+body:has(.ai-assistant-window:not(.hidden)) .new-card-button,
+body.ai-panel-open .new-card-button {
+  right: 380px;
+}
+
 /* Container */
 .app-container {
   /* max-width: 420px; */
@@ -96,14 +101,18 @@ header {
 }
 
 .new-card-button {
-  width: 32px;
-  height: 32px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background-color: #007bff;
   color: white;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: fixed;
+  right: 20px;
+  bottom: 15px;
+  font-size: 30px;
 }
 
 .new-card-button:hover {

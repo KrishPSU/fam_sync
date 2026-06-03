@@ -11,7 +11,7 @@ body.dark-mode {
 
 .family {
   display: none;
-  max-width: 420px;
+  /* max-width: 420px; */
   height: calc(100vh - 180px);
   overflow-y: auto;
   margin: auto;

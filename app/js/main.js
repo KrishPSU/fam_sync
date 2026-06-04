@@ -2,7 +2,8 @@ const socket = io();
 
 
 const today_btn = document.getElementById('today-button');
-const ping_btn = document.getElementById('ping-button');
+// const ping_btn = document.getElementById('ping-button');
+const files_btn = document.getElementById('files-button');
 const family_btn = document.getElementById('family-button');
 const ai_btn = document.getElementById('ai-button');
 
@@ -153,36 +154,53 @@ today_btn.addEventListener('click', () => {
   show(today_wrapper);
   hide(ping_wrapper);
   hide(family_wrapper);
+  hide(files_wrapper);
 });
 
-ping_btn.addEventListener('click', async() => {
-  // register();
 
-  const permission = await Notification.requestPermission();
-  console.log("Permission result:", permission);
 
-  if (permission === 'granted') {
-    const reg = await navigator.serviceWorker.register('/sw.js');
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array('BN6FDGyUdl1Or_EP1uWm-Wyt6L5Up2wvnBm6iFZKwgRV-Qd3g69KPQSMqVawOc_LSrvPi_4Ivhmrm4DJOMQHoLs')
-    });
-
-    socket.emit('save-subscription', me, sub);
-  }
-
+files_btn.addEventListener('click', () => {
   current_active_btn.classList.remove('active');
-  ping_btn.classList.add('active');
-  current_active_btn = ping_btn;
-  document.getElementById('title').value = "";
-  document.getElementById('message').value = "";
+  files_btn.classList.add('active');
+  current_active_btn = files_btn;
+  document.getElementById('files-list').innerHTML = "";
+  // socket.emit('request-my-files', me);
   hide(today_wrapper);
-  hide(noti_sent);
-  hide(ping_error);
-  // show(ping_form);
-  show(ping_wrapper);
+  hide(ping_wrapper);
   hide(family_wrapper);
+  show(files_wrapper);
 });
+
+
+
+// ping_btn.addEventListener('click', async() => {
+//   // register();
+
+//   const permission = await Notification.requestPermission();
+//   console.log("Permission result:", permission);
+
+//   if (permission === 'granted') {
+//     const reg = await navigator.serviceWorker.register('/sw.js');
+//     const sub = await reg.pushManager.subscribe({
+//       userVisibleOnly: true,
+//       applicationServerKey: urlBase64ToUint8Array('BN6FDGyUdl1Or_EP1uWm-Wyt6L5Up2wvnBm6iFZKwgRV-Qd3g69KPQSMqVawOc_LSrvPi_4Ivhmrm4DJOMQHoLs')
+//     });
+
+//     socket.emit('save-subscription', me, sub);
+//   }
+
+//   current_active_btn.classList.remove('active');
+//   ping_btn.classList.add('active');
+//   current_active_btn = ping_btn;
+//   document.getElementById('title').value = "";
+//   document.getElementById('message').value = "";
+//   hide(today_wrapper);
+//   hide(noti_sent);
+//   hide(ping_error);
+//   // show(ping_form);
+//   show(ping_wrapper);
+//   hide(family_wrapper);
+// });
 
 family_btn.addEventListener('click', () => {
   current_active_btn.classList.remove('active');
@@ -191,6 +209,7 @@ family_btn.addEventListener('click', () => {
   hide(today_wrapper);
   hide(ping_wrapper);
   show(family_wrapper);
+  hide(files_wrapper);
 });
 
 

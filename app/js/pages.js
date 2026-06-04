@@ -2,6 +2,7 @@
 
 const today_wrapper = document.querySelector('.today');
 const ping_wrapper = document.querySelector('.ping');
+const files_wrapper = document.querySelector('.files');
 const family_wrapper = document.querySelector('.family');
 
 

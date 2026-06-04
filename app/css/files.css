@@ -1,0 +1,26 @@
+.files {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 16px;
+  /* max-width: 420px; */
+  width: 100%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  margin: 2rem auto;
+
+  display: none;
+  flex-direction: column;
+
+  overflow: auto;     /* ✨ scroll if inner content exceeds this */
+}
+
+.files h2 {
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+
+
+body.dark-mode .files {
+  background: #23272a;
+  color: #e3e3e3;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}

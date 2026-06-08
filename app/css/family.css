@@ -12,13 +12,21 @@ body.dark-mode {
 .family {
   display: none;
   /* max-width: 420px; */
-  height: calc(100vh - 180px);
+  height: calc(100vh - 210px);
   overflow-y: auto;
-  margin: auto;
+  margin: 1rem;
+  margin-top: 30px;
   background-color: #fff;
   border-radius: 16px;
   padding: 1rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 600px) {
+  .family {
+    margin: 0;
+    margin-top: 30px;
+  }
 }
 
 body.dark-mode .family {

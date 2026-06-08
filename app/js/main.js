@@ -163,7 +163,6 @@ files_btn.addEventListener('click', () => {
   current_active_btn.classList.remove('active');
   files_btn.classList.add('active');
   current_active_btn = files_btn;
-  document.getElementById('files-list').innerHTML = "";
   // socket.emit('request-my-files', me);
   hide(today_wrapper);
   hide(ping_wrapper);

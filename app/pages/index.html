@@ -28,6 +28,7 @@
   <script defer src="../js/edit-card-modal.js"></script>
   <script defer src="../js/delete-task-and-event.js"></script>
   <script defer src="../js/ping-page-display.js"></script>
+  <script defer src="../js/files.js"></script>
 
 
   <link rel="stylesheet" href="../css/main.css">
@@ -113,13 +114,79 @@
 
 
     <div class="files">
-      <h2>Family Files</h2>
-      <ul id="files-list">
-        <!-- <li class="file-item">
-          <span>Grocery List</span>
-          <a href="/files/grocery-list.pdf" download>Download</a>
-        </li> -->
-      </ul>
+      <!-- Hidden radio inputs drive CSS toggle state -->
+      <input type="radio" name="filesViewToggle" id="family-files-radio" class="files-radio" checked>
+      <input type="radio" name="filesViewToggle" id="my-files-radio" class="files-radio">
+
+      <div class="files-top">
+        <h2>Files</h2>
+        <button class="upload-file-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Upload
+        </button>
+      </div>
+
+      <div class="files-toggle">
+        <label for="family-files-radio" class="files-toggle-option">Family</label>
+        <label for="my-files-radio" class="files-toggle-option">My</label>
+        <div class="files-toggle-slider"></div>
+      </div>
+
+      <div class="files-content">
+        <div class="files-family-grid" id="family-files-grid">
+          <!--
+          <div class="file-block">
+            <div class="file-block-body">
+              <div class="file-block-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div class="file-block-text">
+                <span class="file-block-name">Family Budget.xlsx</span>
+                <span class="file-block-meta">XLSX · Jun 1, 2025</span>
+              </div>
+            </div>
+            <div class="file-block-actions">
+              <button class="file-info-btn" title="More info">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </button>
+              <button class="file-download-btn" title="Download">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+            </div>
+          </div>
+          -->
+          <p class="files-empty">No family files yet.</p>
+        </div>
+
+        <div class="files-my-grid" id="my-files-grid">
+          <!--
+          <div class="file-block">
+            <div class="file-block-body">
+              <div class="file-block-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div class="file-block-text">
+                <span class="file-block-name">My Resume.pdf</span>
+                <span class="file-block-meta">PDF · Jun 5, 2025</span>
+              </div>
+            </div>
+            <div class="file-block-actions">
+              <button class="file-info-btn" title="More info">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </button>
+              <button class="file-download-btn" title="Download">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+            </div>
+          </div>
+          -->
+          <p class="files-empty">No files yet.</p>
+        </div>
+      </div>
     </div>
 
 
@@ -344,6 +411,26 @@
     </div>
   </div>
 
+
+  <!-- File Info Modal (mobile) -->
+  <div id="fileInfoModal" class="modal hidden">
+    <div class="modal-content file-info-modal-content">
+      <div class="file-modal-top">
+        <div class="file-modal-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="file-modal-info">
+          <h3 id="file-modal-name">Filename</h3>
+          <p id="file-modal-meta">Type · Date</p>
+        </div>
+        <button id="close-file-modal-btn" class="cancel-btn-x">✕</button>
+      </div>
+      <button class="file-modal-download-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </button>
+    </div>
+  </div>
 
   <div id="editCardModal" class="modal hidden">
     <div class="modal-content">

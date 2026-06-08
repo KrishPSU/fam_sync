@@ -2,25 +2,401 @@
   background: white;
   padding: 1.5rem;
   border-radius: 16px;
-  /* max-width: 420px; */
-  width: 100%;
+  /* width: 100%; */
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  margin: 2rem auto;
-
+  margin: 1rem;
+  margin-top: 30px;
   display: none;
   flex-direction: column;
-
-  overflow: auto;     /* ✨ scroll if inner content exceeds this */
+  overflow: auto;
 }
 
-.files h2 {
+/* ── Hidden radio inputs (state machine for CSS toggle) ── */
+.files-radio {
+  display: none;
+}
+
+/* ── Header row ── */
+.files-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.files-top h2 {
+  margin: 0;
+  text-align: left;
+}
+
+/* ── Upload button ── */
+.upload-file-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  border-radius: 20px;
+  border: none;
+  background: #5c7cfa;
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.upload-file-btn:hover {
+  background: #4263eb;
+}
+
+/* ── Pill toggle ── */
+.files-toggle {
+  display: flex;
+  background: #f0f0f0;
+  border-radius: 24px;
+  padding: 4px;
+  position: relative;
+  margin-bottom: 1.25rem;
+  width: 100%;
+}
+
+.files-toggle-option {
+  flex: 1;
   text-align: center;
-  margin-bottom: 1.2rem;
+  padding: 0.45rem 0;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #777;
+  z-index: 1;
+  position: relative;
+  transition: color 0.2s;
+  user-select: none;
 }
 
+.files-toggle-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
 
+/* Active label color */
+#family-files-radio:checked ~ .files-toggle label[for="family-files-radio"],
+#my-files-radio:checked ~ .files-toggle label[for="my-files-radio"] {
+  color: #1a1a2e;
+}
+
+/* Slider position */
+#my-files-radio:checked ~ .files-toggle .files-toggle-slider {
+  transform: translateX(100%);
+}
+
+/* ── Content visibility ── */
+.files-my-grid {
+  display: none;
+}
+
+#family-files-radio:checked ~ .files-content .files-family-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+#family-files-radio:checked ~ .files-content .files-my-grid {
+  display: none;
+}
+
+#my-files-radio:checked ~ .files-content .files-family-grid {
+  display: none;
+}
+
+#my-files-radio:checked ~ .files-content .files-my-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.files-family-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* ── Empty state ── */
+.files-empty {
+  text-align: center;
+  color: #aaa;
+  font-size: 0.9rem;
+  padding: 2rem 0;
+  margin: 0;
+}
+
+body.dark-mode .files-empty {
+  color: #555;
+}
+
+/* ── File block ── */
+.file-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  gap: 0.75rem;
+  transition: background 0.15s;
+}
+
+.file-block:hover {
+  background: #edf0f5;
+}
+
+.file-block-body {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.file-block-icon {
+  flex-shrink: 0;
+  color: #5c7cfa;
+}
+
+.file-block-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.file-block-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2c2c3a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-block-meta {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+/* ── Action buttons ── */
+.file-block-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.file-info-btn,
+.file-download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.file-info-btn {
+  background: #edf0f5;
+  color: #5c7cfa;
+}
+
+.file-info-btn:hover {
+  background: #d8e0f7;
+}
+
+.file-download-btn {
+  background: #edf0f5;
+  color: #2c2c3a;
+}
+
+.file-download-btn:hover {
+  background: #d8e0f7;
+  color: #5c7cfa;
+}
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  .files {
+    margin: 0;
+    margin-top: 30px;
+  }
+
+  .file-block-icon {
+    display: none;
+  }
+
+  .file-block-meta {
+    display: none;
+  }
+
+  .file-download-btn {
+    display: none;
+  }
+}
+
+/* ── File info modal ── */
+.file-info-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.file-modal-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.file-modal-icon {
+  flex-shrink: 0;
+  color: #5c7cfa;
+}
+
+.file-modal-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-modal-info h3 {
+  margin: 0 0 0.15rem;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-modal-info p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.cancel-btn-x {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #888;
+  padding: 0.25rem;
+  flex-shrink: 0;
+}
+
+.cancel-btn-x:hover {
+  color: #333;
+}
+
+.file-modal-download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.7rem;
+  border-radius: 12px;
+  border: none;
+  background: #5c7cfa;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.file-modal-download-btn:hover {
+  background: #4263eb;
+}
+
+/* ── Dark mode ── */
 body.dark-mode .files {
   background: #23272a;
   color: #e3e3e3;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .files-toggle {
+  background: #2d3238;
+}
+
+body.dark-mode .files-toggle-slider {
+  background: #3d4450;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .files-toggle-option {
+  color: #888;
+}
+
+body.dark-mode #family-files-radio:checked ~ .files-toggle label[for="family-files-radio"],
+body.dark-mode #my-files-radio:checked ~ .files-toggle label[for="my-files-radio"] {
+  color: #e3e3e3;
+}
+
+body.dark-mode .file-block {
+  background: #2d3238;
+}
+
+body.dark-mode .file-block:hover {
+  background: #373d45;
+}
+
+body.dark-mode .file-block-name {
+  color: #e3e3e3;
+}
+
+body.dark-mode .file-block-meta {
+  color: #777;
+}
+
+body.dark-mode .file-block-icon {
+  color: #7b9cfc;
+}
+
+body.dark-mode .file-info-btn,
+body.dark-mode .file-download-btn {
+  background: #373d45;
+  color: #b0bec5;
+}
+
+body.dark-mode .file-info-btn:hover,
+body.dark-mode .file-download-btn:hover {
+  background: #434b58;
+  color: #7b9cfc;
+}
+
+body.dark-mode .upload-file-btn {
+  background: #4263eb;
+}
+
+body.dark-mode .upload-file-btn:hover {
+  background: #3451d1;
+}
+
+body.dark-mode .file-modal-info p {
+  color: #777;
+}
+
+body.dark-mode .cancel-btn-x {
+  color: #777;
+}
+
+body.dark-mode .cancel-btn-x:hover {
+  color: #e3e3e3;
 }

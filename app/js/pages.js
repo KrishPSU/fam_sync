@@ -31,7 +31,7 @@ function show(elem) {
   if (elem == ping_wrapper) {
     socket.emit('request-family-members');
   }
-  elem.style.display = "block";
+  elem.style.display = elem === files_wrapper ? "flex" : "block";
 }
 
 

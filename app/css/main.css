@@ -196,15 +196,21 @@ header h1 {
 
 .card li {
   padding: 0.3rem 0;
-  white-space: nowrap;
+  /* white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: ellipsis; */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .card label {
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: auto;
+  /* text-overflow: ellipsis; */
+  /* white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word; */
 }
 
 /* Checkboxes */

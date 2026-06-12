@@ -30,6 +30,8 @@ const my_events_list = document.getElementById('my-events');
 const my_tasks_list = document.getElementById('my-tasks');
 const my_cards_list = document.getElementById('my-cards');
 
+const cardFilesMap = {};
+
 
 
 function addEventToList(event, event_id, time) {
@@ -71,13 +73,22 @@ function addTaskToList(task, task_id, isComplete) {
 }
 
 
-function addCardToList(title, description, cardOwner, cardId) {
+function addCardToList(title, description, cardOwner, cardId, files = []) {
+  if (files.length > 0) cardFilesMap[cardId] = files;
+
+  const attachmentBtn = files.length > 0
+    ? `<button class="card-attachment-btn" data-card-id="${cardId}">
+         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+         ${files.length} file${files.length !== 1 ? 's' : ''}
+       </button>`
+    : '';
+
   const section_elem = document.createElement('section');
   let innerHtml;
 
   if (cardOwner == me) {
     innerHtml = `
-      <section class="card" id=${cardId}>
+      <section class="card" id="${cardId}">
         <div class="card-top">
           <h2>${title}</h2>
           <button class="dots-button">⋯</button>
@@ -88,15 +99,17 @@ function addCardToList(title, description, cardOwner, cardId) {
         </div>
         <div class="card-content">
           <p>${description}</p>
+          ${attachmentBtn}
         </div>
       </section>
     `;
   } else {
     innerHtml = `
-      <section class="card" id=${cardId}>
+      <section class="card" id="${cardId}">
         <h2>${title} - ${uppercaseFirstLetter(cardOwner)}</h2>
         <div class="card-content">
           <p>${description}</p>
+          ${attachmentBtn}
         </div>
       </section>
     `;
@@ -107,9 +120,7 @@ function addCardToList(title, description, cardOwner, cardId) {
 }
 
 
-socket.on('data-for-person', (events, tasks, cards) => {
-
-  console.log(events, tasks, cards);
+socket.on('data-for-person', (events, tasks, cards, cardFiles) => {
 
   my_events_list.innerHTML = "";
   my_tasks_list.innerHTML = "";
@@ -126,17 +137,23 @@ socket.on('data-for-person', (events, tasks, cards) => {
       addEventToList(event.title, event.id, event.time);
     });
   }
-  
+
   if (tasks.length > 0) {
-    // console.log(tasks);
     tasks.forEach((task) => {
       addTaskToList(task.title, task.id, task.complete);
     });
   }
 
   if (cards.length > 0) {
+    const filesForCard = {};
+    if (cardFiles && cardFiles.length > 0) {
+      cardFiles.forEach(f => {
+        if (!filesForCard[f.card_id]) filesForCard[f.card_id] = [];
+        filesForCard[f.card_id].push(f);
+      });
+    }
     cards.forEach((card) => {
-      addCardToList(card.title, card.description, card.person, card.id);
+      addCardToList(card.title, card.description, card.person, card.id, filesForCard[card.id] || []);
     });
   }
 });

@@ -2,15 +2,18 @@ const express = require("express");
 const socket = require("socket.io");
 const app = express();
 const webPush = require('web-push');
+const multer = require('multer');
 
 require('dotenv').config();
 
-
+const supabaseOrigin = (() => {
+  try { return new URL(process.env.SUPABASE_URL).origin; } catch { return ''; }
+})();
 
 const { createClient } = require('@supabase/supabase-js')
 
-// Create a single supabase client for interacting with your database
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
 
 
@@ -19,6 +22,11 @@ var path = require("path");
 var bodyParser = require('body-parser');
 var helmet = require('helmet');
 var rateLimit = require("express-rate-limit");
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }
+});
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -36,10 +44,11 @@ app.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "https://api.weather.gov"],
-      imgSrc: ["'self'", "data:", "https://img.icons8.com"],
+      connectSrc: ["'self'", "https://api.weather.gov", supabaseOrigin],
+      imgSrc: ["'self'", "data:", "https://img.icons8.com", supabaseOrigin],
       scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"], // if needed for inline styles
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      frameSrc: [supabaseOrigin],
     },
   })
 );
@@ -52,6 +61,55 @@ app.use(
 // });
 
 const chavans = ["sandeep", "smita", "aarav", "krish"];
+
+app.post('/api/upload-card-file', upload.single('file'), async (req, res) => {
+  const { cardId, person } = req.body;
+  const file = req.file;
+
+  if (!file || !cardId || !person) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  if (!chavans.includes(person)) {
+    return res.status(403).json({ error: 'Invalid person' });
+  }
+
+  const ext = path.extname(file.originalname);
+  const baseName = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9._-]/g, '_');
+  const filePath = `${person}/${cardId}/${Date.now()}_${baseName}${ext}`;
+
+  const { error: storageError } = await supabaseAdmin.storage
+    .from('card-attachments')
+    .upload(filePath, file.buffer, { contentType: file.mimetype, upsert: false });
+
+  if (storageError) {
+    console.error('Storage error:', storageError);
+    return res.status(500).json({ error: 'Upload failed' });
+  }
+
+  const { data: urlData } = supabaseAdmin.storage
+    .from('card-attachments')
+    .getPublicUrl(filePath);
+
+  const { error: dbError } = await supabaseAdmin
+    .from('card_files')
+    .insert({
+      card_id: cardId,
+      file_name: file.originalname,
+      file_path: filePath,
+      file_url: urlData.publicUrl,
+      uploaded_by: person
+    });
+
+  if (dbError) {
+    console.error('DB error:', dbError);
+    return res.status(500).json({ error: 'Failed to save file record' });
+  }
+
+  res.json({ success: true, url: urlData.publicUrl, fileName: file.originalname });
+});
+
+
 
 app.get('/', function(req,res){
   res.sendFile(path.join(__dirname, 'app', 'pages', 'landing-page.html'));
@@ -76,7 +134,7 @@ app.get('/:name', function(req,res){
     return;
   }
 
-  res.setHeader("Content-Security-Policy", "default-src 'self'; connect-src 'self' https://api.weather.gov");
+  res.setHeader("Content-Security-Policy", `default-src 'self'; connect-src 'self' https://api.weather.gov ${supabaseOrigin}; img-src 'self' data: https://img.icons8.com ${supabaseOrigin}; frame-src ${supabaseOrigin}; script-src 'self'; style-src 'self' 'unsafe-inline'`);
   res.sendFile(path.join(__dirname, 'app', 'pages', 'index.html'));
 });
 
@@ -182,6 +240,7 @@ io.on("connection", function (socket) {
       console.error(error);
     } else {
       io.emit('update-cards', title, description, person, data[0].id);
+      socket.emit('card-created', data[0].id);
     }
   });
 
@@ -191,7 +250,8 @@ io.on("connection", function (socket) {
     const events = await getEventsForPerson(person);
     const tasks = await getTasksForPerson(person);
     const cards = await getCards();
-    socket.emit('data-for-person', events, tasks, cards);
+    const cardFiles = await getCardFiles(cards ? cards.map(c => c.id) : []);
+    socket.emit('data-for-person', events, tasks, cards, cardFiles);
   });
 
 
@@ -234,6 +294,17 @@ io.on("connection", function (socket) {
     } else {
       return data;
     }
+  }
+
+
+  async function getCardFiles(cardIds) {
+    if (!cardIds || cardIds.length === 0) return [];
+    const { data, error } = await supabase
+      .from('card_files')
+      .select()
+      .in('card_id', cardIds);
+    if (error) { console.error(error); return []; }
+    return data || [];
   }
 
 
@@ -288,6 +359,19 @@ io.on("connection", function (socket) {
   // Card Deletion / Edits
 
   socket.on('delete-card', async (cardId) => {
+    // Fetch file paths before cascade-delete removes them
+    const { data: files } = await supabase
+      .from('card_files')
+      .select('file_path')
+      .eq('card_id', cardId);
+
+    if (files && files.length > 0) {
+      const { error: storageError } = await supabaseAdmin.storage
+        .from('card-attachments')
+        .remove(files.map(f => f.file_path));
+      if (storageError) console.error('Storage deletion error:', storageError);
+    }
+
     const { data, error } = await supabase
       .from('cards')
       .delete()
@@ -297,7 +381,6 @@ io.on("connection", function (socket) {
     if (error) {
       console.error(error);
     } else {
-      // return data;
       socket.broadcast.emit('card-deletion', cardId);
     }
   });

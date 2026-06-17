@@ -204,9 +204,6 @@ io.use(async (socket, next) => {
 
 webPush.setVapidDetails(`mailto:${process.env.PERSONAL_EMAIL}`, process.env.PUBLIC_VAPID_KEY, process.env.PRIVATE_VAPID_KEY);
 
-const users = {};         // { userId: socketId }
-const subscriptions = {}; // { userId: PushSubscription }
-
 
 
 
@@ -250,6 +247,10 @@ io.on("connection", function (socket) {
 
   console.log("New socket connection!");
 
+  // A private room per user, so a ping can be pushed to that specific person's
+  // open tabs in real time (e.g. the "you missed a ping" in-app nudge).
+  socket.join('user:' + socket.userId);
+
   // Scope all real-time broadcasts to the user's family (rooms keyed by family id).
   if (socket.familyId) {
     socket.join(socket.familyId);
@@ -259,6 +260,19 @@ io.on("connection", function (socket) {
     // client so it can show a friendly "ask to be added" banner.
     socket.emit('no-family');
   }
+
+  // On (re)connect, surface any direct pings that never reached this user as a
+  // push notification and that they haven't dismissed yet. Drives the in-app
+  // banner so they know to enable notifications.
+  (async () => {
+    const { count, error } = await supabaseAdmin
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('to_id', socket.userId)
+      .eq('delivered_push', false)
+      .eq('push_miss_ack', false);
+    if (!error && count > 0) socket.emit('push-miss-nudge', { count });
+  })();
 
 
 
@@ -649,25 +663,71 @@ io.on("connection", function (socket) {
   // Web Push Notifications
 
 
-  socket.on('register', () => {
-    users[socket.userId] = socket.id;
+  // Persist this device's push subscription (one row per endpoint, so a user
+  // can be reached on multiple devices). Upsert keeps it idempotent across
+  // reconnects and reclaims an endpoint if it was previously another account's.
+  socket.on('save-subscription', async (subscription) => {
+    if (!subscription || !subscription.endpoint) return;
+    const { error } = await supabaseAdmin
+      .from('push_subscriptions')
+      .upsert(
+        { user_id: socket.userId, endpoint: subscription.endpoint, subscription },
+        { onConflict: 'endpoint' }
+      );
+    if (error) console.error(error);
   });
 
-  socket.on('save-subscription', (subscription) => {
-    subscriptions[socket.userId] = subscription;
-  });
+  // All of a user's saved device subscriptions. Admin client: pinging is a
+  // cross-user read, gated by the same-family check in pingUser.
+  async function getSubscriptions(userId) {
+    const { data, error } = await supabaseAdmin
+      .from('push_subscriptions')
+      .select('endpoint, subscription')
+      .eq('user_id', userId);
+    if (error) { console.error(error); return []; }
+    return data || [];
+  }
+
+  // Push to every device a user has registered. Returns true if at least one
+  // device accepted the notification. Prunes dead endpoints (expired/unsub).
+  async function pushToUser(userId, from, title, message) {
+    const subs = await getSubscriptions(userId);
+    const payload = JSON.stringify({
+      title: `${from} pinged you: ${title}`, // e.g. "Krish Chavan pinged you: Reminder"
+      body: message
+    });
+    let delivered = false;
+    await Promise.all(subs.map(async (row) => {
+      try {
+        await webPush.sendNotification(row.subscription, payload);
+        delivered = true;
+      } catch (err) {
+        // 404/410 → the subscription is gone for good; drop it so we stop trying.
+        if (err.statusCode === 404 || err.statusCode === 410) {
+          await supabaseAdmin.from('push_subscriptions').delete().eq('endpoint', row.endpoint);
+        } else {
+          console.error(err);
+        }
+      }
+    }));
+    return delivered;
+  }
 
   socket.on('pingUser', async (to, title, message) => {
     if (!socket.familyId) return;
     const from = socket.displayName;
+    title = (title || '').trim();
+    message = (message || '').trim();
+    if (!to || !title || !message) return;
 
     if (to === 'all') {
       const members = await getFamilyMembers();
-      members.forEach((m) => {
-        if (m.id === socket.userId) return;
-        if (subscriptions[m.id]) sendPing(subscriptions[m.id], from, title, message);
-      });
-      await recordMessage(null, title, message);   // to_id NULL = family broadcast
+      await Promise.all(
+        members
+          .filter((m) => m.id !== socket.userId)
+          .map((m) => pushToUser(m.id, from, title, message))
+      );
+      await recordMessage(null, title, message, true); // to_id NULL = family broadcast
       socket.emit('registered-and-sent', 'everyone');
       return;
     }
@@ -680,103 +740,50 @@ io.on("connection", function (socket) {
       .single();
 
     if (!recipient || recipient.family_id !== socket.familyId) {
-      socket.emit('not-registered-for-notis', 'that person');
+      socket.emit('ping-failed', 'that person');
       return;
     }
 
-    await recordMessage(recipient.id, title, message);
+    const delivered = await pushToUser(recipient.id, from, title, message);
+    await recordMessage(recipient.id, title, message, delivered);
 
-    if (subscriptions[to]) {
-      sendPing(subscriptions[to], from, title, message);
+    if (delivered) {
       socket.emit('registered-and-sent', recipient.display_name);
     } else {
-      socket.emit('not-registered-for-notis', recipient.display_name);
+      // Saved, but no push got through (recipient hasn't enabled notifications).
+      // Tell the sender, and nudge the recipient's open tabs in real time.
+      socket.emit('ping-sent-no-push', recipient.display_name);
+      io.to('user:' + recipient.id).emit('push-miss-nudge', { from, count: 1 });
     }
   });
 
   // Persist a ping as a message row (RLS enforces from_id = caller + same family).
-  async function recordMessage(toId, title, message) {
+  // `deliveredPush` records whether it reached the recipient as a notification.
+  async function recordMessage(toId, title, message, deliveredPush) {
     const { error } = await socket.userSupabase
       .from('messages')
-      .insert({ from_id: socket.userId, to_id: toId, family_id: socket.familyId, title: title, message: message });
+      .insert({
+        from_id: socket.userId,
+        to_id: toId,
+        family_id: socket.familyId,
+        title: title,
+        message: message,
+        delivered_push: !!deliveredPush
+      });
     if (error) console.error(error);
   }
 
-
-
-  // socket.on('pingUser', async (to, title, message) => {
-  //   const payload = JSON.stringify({ title, body: message });
-
-  //   const { data, error } = await supabase
-  //     .from('subscriptions')
-  //     .select('subscription')
-  //     .eq('name', to)
-  //     .single();
-
-  //   if (error || !data) {
-  //     socket.emit('not-registered-for-notis', to);
-  //     return;
-  //   }
-
-  //   const success = await sendNotification(to, payload);
-
-  //   if (success) {
-  //     socket.emit('registered-and-sent', to);
-  //   } else {
-  //     socket.emit('not-registered-for-notis', to);
-  //   }
-  // });
-
-
-
-
-  // Push a web-push notification. Message persistence + client acks are handled
-  // by the caller (pingUser / recordMessage), so this just fires the notification.
-  function sendPing(subscription, from, title, message) {
-    if (!subscription) return;
-    const payload = JSON.stringify({
-      title: `${from} pinged you: ${title}`, // e.g. "Krish Chavan pinged you: Reminder"
-      body: message
-    });
-    webPush.sendNotification(subscription, payload).catch(console.error);
-  }
-
-
-  // sendNotification with error handling
-
-  // async function sendNotification(to, payload) {
-  //   const subscription = subscriptions[to]; // in-memory
-  //   if (!subscription) {
-  //     console.log(`${to} has no subscription`);
-  //     return false;
-  //   }
-
-  //   try {
-  //     await webPush.sendNotification(subscription, payload);
-  //     console.log(`✅ Notification sent to ${to}`);
-  //     return true;
-  //   } catch (err) {
-  //     console.error(`❌ Failed to send to ${to}:`, err.statusCode);
-
-  //     // Cleanup for expired or invalid subscription
-  //     if (err.statusCode === 410 || err.statusCode === 404) {
-  //       console.log(`🧹 Removing invalid subscription for ${to}`);
-
-  //       // Remove from Supabase
-  //       await supabase
-  //         .from('subscriptions')
-  //         .delete()
-  //         .eq('name', to);
-
-  //       // Remove from in-memory object
-  //       delete subscriptions[to];
-  //     }
-
-  //     return false;
-  //   }
-  // }
-
-
+  // Recipient dismissed the in-app "you missed a ping" banner — stop re-showing
+  // it for the pings they've now acknowledged.
+  socket.on('ack-push-miss', async () => {
+    const { error } = await supabaseAdmin
+      .from('messages')
+      .update({ push_miss_ack: true })
+      .eq('to_id', socket.userId)
+      .eq('delivered_push', false)
+      .eq('push_miss_ack', false);
+    if (error) console.error(error);
+  });
 
 
 

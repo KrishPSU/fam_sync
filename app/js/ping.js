@@ -11,13 +11,15 @@ const send_another_btn = document.getElementById('send-another-btn');
 
 
 socket.on('family-members', (family_members) => {
-  // Build the dropdown in one pass, then assign once. "Everyone" lets you ping
-  // the whole family at once (server fans out to each member's devices).
-  const options = ['<option value="">-- Choose --</option>', '<option value="all">Everyone</option>'];
-  family_members.forEach((member) => {
-    if (member.id !== me) {
-      options.push(`<option value="${member.id}">${member.display_name}</option>`);
-    }
+  // Build the dropdown in one pass, then assign once.
+  const otherMembers = family_members.filter((member) => member.id !== me);
+  const options = ['<option value="">-- Choose --</option>'];
+  // "Everyone" only makes sense when there's actually someone else to ping.
+  if (otherMembers.length > 0) {
+    options.push('<option value="all">Everyone</option>');
+  }
+  otherMembers.forEach((member) => {
+    options.push(`<option value="${member.id}">${member.display_name}</option>`);
   });
   members_dropdown.innerHTML = options.join('');
 });

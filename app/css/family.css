@@ -151,3 +151,87 @@ body.dark-mode .family-member h2 {
 body.dark-mode .empty_family_item {
   color: #aaa;
 }
+
+
+/* ---- Manage Family modal ---- */
+.family-modal-line {
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+}
+
+.invite-code-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.invite-code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 1.3rem;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  background: #f0f4ff;
+  color: #1a3e8c;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+}
+
+body.dark-mode .invite-code {
+  background: #2b3340;
+  color: #90c4ff;
+}
+
+.invite-hint {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin: 0 0 0.5rem;
+}
+
+.family-members-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.family-members-list li {
+  padding: 0.35rem 0;
+  border-top: 1px solid #eee;
+  font-size: 0.95rem;
+}
+
+body.dark-mode .family-members-list li {
+  border-top: 1px solid #333;
+}
+
+.family-or {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1rem 0;
+  opacity: 0.6;
+}
+
+.family-or::before,
+.family-or::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #ccc;
+}
+
+.family-or span {
+  padding: 0 0.75rem;
+  font-size: 0.85rem;
+}
+
+body.dark-mode .family-or::before,
+body.dark-mode .family-or::after {
+  border-bottom: 1px solid #444;
+}
+
+.family-error {
+  color: #d23b3b;
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
+  text-align: center;
+}

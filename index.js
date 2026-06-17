@@ -434,6 +434,87 @@ io.on("connection", function (socket) {
 
 
 
+  // ---- Family create / join (Phase B) ----
+
+  // { id, name, invite_code, members } for the caller's current family.
+  async function getFamilyInfo() {
+    if (!socket.familyId) return null;
+    const { data: fam } = await supabaseAdmin
+      .from('families')
+      .select('id, name, invite_code')
+      .eq('id', socket.familyId)
+      .single();
+    if (!fam) return null;
+    return { id: fam.id, name: fam.name, invite_code: fam.invite_code, members: await getFamilyMembers() };
+  }
+
+  // 6-char code from an unambiguous alphabet (no 0/O/1/I), unique vs existing.
+  async function generateUniqueInviteCode() {
+    const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    for (let attempt = 0; attempt < 10; attempt++) {
+      let code = '';
+      for (let i = 0; i < 6; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+      const { data } = await supabaseAdmin.from('families').select('id').eq('invite_code', code).maybeSingle();
+      if (!data) return code;
+    }
+    return ('F' + Date.now().toString(36).toUpperCase()).slice(-6);
+  }
+
+  socket.on('request-family-info', async () => {
+    if (!socket.familyId) { socket.emit('no-family'); return; }
+    socket.emit('family-info', await getFamilyInfo());
+  });
+
+  socket.on('create-family', async (name) => {
+    if (socket.familyId) { socket.emit('family-error', "You're already in a family."); return; }
+    const trimmed = (name || '').trim();
+    if (!trimmed) { socket.emit('family-error', 'Please enter a family name.'); return; }
+
+    const code = await generateUniqueInviteCode();
+    const { data: fam, error } = await supabaseAdmin
+      .from('families')
+      .insert({ name: trimmed, invite_code: code })
+      .select()
+      .single();
+    if (error || !fam) { console.error(error); socket.emit('family-error', 'Could not create the family.'); return; }
+
+    const { error: pErr } = await supabaseAdmin
+      .from('profiles')
+      .update({ family_id: fam.id })
+      .eq('id', socket.userId);
+    if (pErr) { console.error(pErr); socket.emit('family-error', 'Could not join the new family.'); return; }
+
+    socket.familyId = fam.id;
+    socket.join(fam.id);
+    socket.emit('family-joined', await getFamilyInfo());
+  });
+
+  socket.on('join-family', async (code) => {
+    if (socket.familyId) { socket.emit('family-error', "You're already in a family."); return; }
+    const c = (code || '').trim().toUpperCase();
+    if (!c) { socket.emit('family-error', 'Please enter an invite code.'); return; }
+
+    const { data: fam } = await supabaseAdmin
+      .from('families')
+      .select('id, name, invite_code')
+      .eq('invite_code', c)
+      .maybeSingle();
+    if (!fam) { socket.emit('family-error', 'No family found with that code.'); return; }
+
+    const { error: pErr } = await supabaseAdmin
+      .from('profiles')
+      .update({ family_id: fam.id })
+      .eq('id', socket.userId);
+    if (pErr) { console.error(pErr); socket.emit('family-error', 'Could not join that family.'); return; }
+
+    socket.familyId = fam.id;
+    socket.join(fam.id);
+    socket.emit('family-joined', await getFamilyInfo());
+  });
+
+
+
+
   // Card Deletion / Edits
 
   socket.on('delete-card', async (cardId) => {

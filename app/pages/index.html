@@ -24,6 +24,7 @@
   <script defer src="../js/new-task-modal.js"></script>
   <script defer src="../js/create-card-modal.js"></script>
   <script defer src="../js/family.js"></script>
+  <script defer src="../js/family-modal.js"></script>
   <script defer src="../js/ping.js"></script>
   <script defer src="../js/tasks.js"></script>
   <script defer src="../js/card.js"></script>
@@ -267,7 +268,7 @@
           <button id="all_tab" class="tab selected">All</button>
           <button id="events_tab" class="tab">Events</button>
           <button id="tasks_tab" class="tab">Tasks</button>
-          <!-- <button class="add-button">+</button> -->
+          <button class="add-button" id="manage-family-btn" title="Manage family">⚙</button>
         </nav>
       </header>
 
@@ -481,6 +482,58 @@
           <button type="button" id="close-edit-card-modal-btn" class="cancel-btn">Cancel</button>
         </div>
       </form>
+    </div>
+  </div>
+
+
+  <!-- Manage Family Modal -->
+  <div id="familyModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Family</h2>
+
+      <!-- When you're in a family -->
+      <div id="family-in-view" class="hidden">
+        <p class="family-modal-line">You're in <strong id="family-name-display"></strong></p>
+
+        <label>Invite code</label>
+        <div class="invite-code-row">
+          <span id="invite-code-display" class="invite-code"></span>
+          <button type="button" id="copy-code-btn" class="attach-btn">Copy</button>
+        </div>
+        <p class="invite-hint">Share this code so family can join.</p>
+
+        <p class="family-modal-line">Members</p>
+        <ul id="family-members-list" class="family-members-list"></ul>
+
+        <div class="modal-buttons">
+          <button type="button" id="close-family-modal-btn" class="cancel-btn">Close</button>
+        </div>
+      </div>
+
+      <!-- When you're not in a family yet -->
+      <div id="family-out-view" class="hidden">
+        <form id="createFamilyForm">
+          <label>Create a family
+            <input type="text" id="create-family-name" placeholder="The Chavans" autocomplete="off" required />
+          </label>
+          <button type="submit" class="submit-btn">Create</button>
+        </form>
+
+        <div class="family-or"><span>or</span></div>
+
+        <form id="joinFamilyForm">
+          <label>Join with a code
+            <input type="text" id="join-family-code" placeholder="7F3K2Q" autocomplete="off" required />
+          </label>
+          <button type="submit" class="submit-btn">Join</button>
+        </form>
+
+        <p id="family-modal-error" class="family-error hidden"></p>
+
+        <div class="modal-buttons">
+          <button type="button" id="close-family-modal-btn-2" class="cancel-btn">Close</button>
+        </div>
+      </div>
     </div>
   </div>
 

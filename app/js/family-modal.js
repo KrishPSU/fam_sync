@@ -23,6 +23,10 @@ function closeFamilyModal() {
 }
 
 manage_family_btn.addEventListener('click', openFamilyModal);
+document.getElementById('banner-join-btn').addEventListener('click', openFamilyModal);
+document.getElementById('banner-close-btn').addEventListener('click', () => {
+  document.getElementById('no-family-banner').style.display = 'none';
+});
 document.getElementById('close-family-modal-btn').addEventListener('click', closeFamilyModal);
 document.getElementById('close-family-modal-btn-2').addEventListener('click', closeFamilyModal);
 

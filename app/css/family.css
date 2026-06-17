@@ -192,6 +192,8 @@ body.dark-mode .invite-code {
   list-style: none;
   padding: 0;
   margin: 0;
+  max-height: 160px;
+  overflow-y: auto;
 }
 
 .family-members-list li {
@@ -250,4 +252,27 @@ body.dark-mode .family-or::after {
 .leave-family-btn:hover {
   background: #d23b3b;
   color: #fff;
+}
+
+/* Inline input + button rows for Create / Join forms */
+#createFamilyForm,
+#joinFamilyForm {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+#createFamilyForm label,
+#joinFamilyForm label {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+#createFamilyForm .submit-btn,
+#joinFamilyForm .submit-btn {
+  flex: none;
+  width: auto;
+  padding: 0.55rem 1rem;
+  font-size: 0.95rem;
+  align-self: flex-end;
 }

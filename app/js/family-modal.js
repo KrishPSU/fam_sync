@@ -9,6 +9,7 @@ const copy_code_btn = document.getElementById('copy-code-btn');
 const create_family_form = document.getElementById('createFamilyForm');
 const join_family_form = document.getElementById('joinFamilyForm');
 const family_modal_error = document.getElementById('family-modal-error');
+const leave_family_btn = document.getElementById('leave-family-btn');
 
 
 function openFamilyModal() {
@@ -60,6 +61,21 @@ socket.on('family-joined', (info) => {
 socket.on('family-error', (msg) => {
   family_modal_error.textContent = msg;
   family_modal_error.classList.remove('hidden');
+});
+
+socket.on('left-family', () => {
+  const banner = document.getElementById('no-family-banner');
+  if (banner) banner.style.display = 'block';
+  renderNoFamily();
+  // Today + family views are now empty (no family) — refresh them.
+  socket.emit('request-data-for-person');
+  socket.emit('request-family-events-and-tasks');
+});
+
+
+leave_family_btn.addEventListener('click', () => {
+  if (!confirm('Leave this family? You will no longer see its events, tasks, or files.')) return;
+  socket.emit('leave-family');
 });
 
 

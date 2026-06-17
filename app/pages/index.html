@@ -67,7 +67,15 @@
         <h1>FamSync</h1>
         <div class="header-actions">
           <button id="ai-button">AI</button>
-          <button id="signout-btn" title="Sign out">Sign out</button>
+          <div class="user-menu">
+            <button id="user-avatar-btn" class="user-avatar-btn" title="Account">
+              <img id="user-avatar-img" class="user-avatar-img hidden" alt="Account" />
+              <span id="user-avatar-fallback" class="user-avatar-fallback hidden"></span>
+            </button>
+            <div id="user-dropdown" class="user-dropdown hidden">
+              <button id="signout-btn">Sign out</button>
+            </div>
+          </div>
         </div>
       </div>
       <p id="dateDisplay" class="date"></p>
@@ -506,6 +514,7 @@
         <ul id="family-members-list" class="family-members-list"></ul>
 
         <div class="modal-buttons">
+          <button type="button" id="leave-family-btn" class="leave-family-btn">Leave family</button>
           <button type="button" id="close-family-modal-btn" class="cancel-btn">Close</button>
         </div>
       </div>

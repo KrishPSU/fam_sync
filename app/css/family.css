@@ -235,3 +235,19 @@ body.dark-mode .family-or::after {
   margin-top: 0.75rem;
   text-align: center;
 }
+
+.leave-family-btn {
+  background: none;
+  border: 1px solid #d23b3b;
+  color: #d23b3b;
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.leave-family-btn:hover {
+  background: #d23b3b;
+  color: #fff;
+}

@@ -62,7 +62,7 @@ app.use(
     directives: {
       defaultSrc: ["'self'"],
       connectSrc: ["'self'", "https://api.weather.gov", supabaseOrigin, "https://cdn.jsdelivr.net"],
-      imgSrc: ["'self'", "data:", "https://img.icons8.com", supabaseOrigin, "https://lh3.googleusercontent.com"],
+      imgSrc: ["'self'", "data:", "https://img.icons8.com", supabaseOrigin, "https://*.googleusercontent.com"],
       scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       frameSrc: [supabaseOrigin],
@@ -510,6 +510,22 @@ io.on("connection", function (socket) {
     socket.familyId = fam.id;
     socket.join(fam.id);
     socket.emit('family-joined', await getFamilyInfo());
+  });
+
+  socket.on('leave-family', async () => {
+    if (!socket.familyId) return;
+    const previous = socket.familyId;
+    const { error } = await supabaseAdmin
+      .from('profiles')
+      .update({ family_id: null })
+      .eq('id', socket.userId);
+    if (error) { console.error(error); socket.emit('family-error', 'Could not leave the family.'); return; }
+
+    // Their existing items keep the old family_id and stay with that family;
+    // the user simply loses access (RLS) and can create/join another.
+    socket.leave(previous);
+    socket.familyId = null;
+    socket.emit('left-family');
   });
 
 

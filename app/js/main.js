@@ -31,6 +31,24 @@ window.addEventListener('load', async () => {
   me = session.user.id;
   myDisplayName = session.user.user_metadata?.full_name || session.user.email;
 
+  // Account avatar — Google photo, falling back to the first initial.
+  const avatarUrl = session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || '';
+  const avatarImg = document.getElementById('user-avatar-img');
+  const avatarFallback = document.getElementById('user-avatar-fallback');
+  function showInitialFallback() {
+    avatarImg.classList.add('hidden');
+    avatarFallback.textContent = (myDisplayName || '?').charAt(0).toUpperCase();
+    avatarFallback.classList.remove('hidden');
+  }
+  if (avatarUrl) {
+    avatarImg.onerror = showInitialFallback;
+    avatarImg.src = avatarUrl;
+    avatarImg.classList.remove('hidden');
+    avatarFallback.classList.add('hidden');
+  } else {
+    showInitialFallback();
+  }
+
   // Authenticate the socket handshake with the access token, then connect.
   socket.auth = { token: session.access_token };
   socket.connect();
@@ -45,6 +63,23 @@ window.addEventListener('load', async () => {
 
   // register();
   socket.emit('request-data-for-person');
+});
+
+// Account dropdown: toggle on avatar click, close when clicking elsewhere.
+const userAvatarBtn = document.getElementById('user-avatar-btn');
+const userDropdown = document.getElementById('user-dropdown');
+
+userAvatarBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  userDropdown.classList.toggle('hidden');
+});
+
+document.addEventListener('click', (e) => {
+  if (!userDropdown.classList.contains('hidden') &&
+      !userDropdown.contains(e.target) &&
+      !userAvatarBtn.contains(e.target)) {
+    userDropdown.classList.add('hidden');
+  }
 });
 
 // Sign out: drop the socket, clear the Supabase session, return to sign-in.

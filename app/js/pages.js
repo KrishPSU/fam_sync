@@ -21,12 +21,21 @@ function hide(elem) {
 }
 
 
+function showFamilyLoader(activeWrapper) {
+  family_events_and_tasks_wrapper.style.display = "none";
+  family_tasks_wrapper.style.display = "none";
+  family_events_wrapper.style.display = "none";
+  activeWrapper.innerHTML = LOADER_HTML;
+  activeWrapper.style.display = "block";
+}
+
 function show(elem) {
   if (elem == today_wrapper) {
     new_card_button.style.display = "flex";
   }
   if (elem == family_wrapper) {
     socket.emit('request-family-events-and-tasks');
+    showFamilyLoader(family_events_and_tasks_wrapper);
   }
   if (elem == ping_wrapper) {
     socket.emit('request-family-members');
@@ -43,7 +52,11 @@ events_tab.addEventListener('click', () => {
   events_tab.classList.add('selected');
   current_selected_tab.classList.remove('selected');
   current_selected_tab = events_tab;
-  renderEvents(family_events, my_family);
+  if (family_events && my_family) {
+    renderEvents(family_events, my_family);
+  } else {
+    showFamilyLoader(family_events_wrapper);
+  }
 });
 
 tasks_tab.addEventListener('click', () => {
@@ -51,6 +64,7 @@ tasks_tab.addEventListener('click', () => {
   tasks_tab.classList.add('selected');
   current_selected_tab.classList.remove('selected');
   current_selected_tab = tasks_tab;
+  showFamilyLoader(family_tasks_wrapper);
 });
 
 all_tab.addEventListener('click', () => {
@@ -58,4 +72,5 @@ all_tab.addEventListener('click', () => {
   all_tab.classList.add('selected');
   current_selected_tab.classList.remove('selected');
   current_selected_tab = all_tab;
+  showFamilyLoader(family_events_and_tasks_wrapper);
 });

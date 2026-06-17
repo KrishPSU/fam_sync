@@ -62,7 +62,7 @@ window.addEventListener('load', async () => {
   });
 
   // register();
-  socket.emit('request-data-for-person');
+  requestTodayData();
 });
 
 // Account dropdown: toggle on avatar click, close when clicking elsewhere.
@@ -114,14 +114,21 @@ const my_cards_list = document.getElementById('my-cards');
 
 const cardFilesMap = {};
 
+const LOADER_HTML = '<div class="loader-wrap"><div class="loader"></div></div>';
+
+function requestTodayData() {
+  my_events_list.innerHTML = LOADER_HTML;
+  my_tasks_list.innerHTML = LOADER_HTML;
+  socket.emit('request-data-for-person');
+}
+
 
 
 function addEventToList(event, event_id, time, isPrivate) {
-  const pill = isPrivate ? '' : '<span class="public-pill">Family</span>';
   const li_elem = document.createElement('li');
   li_elem.classList.add("event-item");
   li_elem.innerHTML = `
-    <span>${pill}<strong>${time}</strong> — ${event}</span>
+    <span><strong>${time}</strong> — ${event}</span>
     <button class="delete-task-and-event-btn">✕</button>
   `;
   li_elem.id = event_id;
@@ -130,40 +137,25 @@ function addEventToList(event, event_id, time, isPrivate) {
 
 
 function addTaskToList(task, task_id, isComplete, isPrivate) {
-  const pill = isPrivate ? '' : '<span class="public-pill">Family</span>';
-  let innerHtml;
-  if (isComplete) {
-    innerHtml = `
-      <div class="task-item">
-        <div class="task-item-left">
-          ${pill}
-          <label class="task completed" id="${task_id}">
-            <input type="checkbox" checked />
-            <span>${task}</span>
-          </label>
+  const completedClass = isComplete ? ' completed' : '';
+  const checkedAttr = isComplete ? ' checked' : '';
+  const innerHtml = `
+    <div class="task-item">
+      <div class="task${completedClass}" id="${task_id}">
+        <div class="round">
+          <input type="checkbox" id="cb-${task_id}"${checkedAttr} />
+          <label for="cb-${task_id}"></label>
         </div>
-        <button class="delete-task-and-event-btn">✕</button>
+        <span class="task-text">${task}</span>
       </div>
-    `;
-  } else {
-    innerHtml = `
-      <div class="task-item">
-        <div class="task-item-left">
-          ${pill}
-          <label class="task" id="${task_id}">
-            <input type="checkbox" />
-            <span>${task}</span>
-          </label>
-        </div>
-        <button class="delete-task-and-event-btn">✕</button>
-      </div>
-    `;
-  }
+      <button class="delete-task-and-event-btn">✕</button>
+    </div>
+  `;
   my_tasks_list.innerHTML += innerHtml;
 }
 
 
-function addCardToList(title, description, cardOwnerId, ownerName, cardId, files = [], isPrivate = false) {
+function addCardToList(title, description, cardOwnerId, ownerName, cardId, files = [], isPrivate = false, insertAtTop = false) {
   if (files.length > 0) cardFilesMap[cardId] = files;
 
   const attachmentBtn = files.length > 0
@@ -210,7 +202,13 @@ function addCardToList(title, description, cardOwnerId, ownerName, cardId, files
   }
 
   section_elem.innerHTML = innerHtml;
-  my_cards_list.appendChild(section_elem);
+  if (insertAtTop) {
+    const tasksSection = document.getElementById('tasks');
+    const anchor = tasksSection ? tasksSection.nextSibling : null;
+    my_cards_list.insertBefore(section_elem, anchor);
+  } else {
+    my_cards_list.appendChild(section_elem);
+  }
 }
 
 
@@ -258,7 +256,7 @@ socket.on('data-for-person', (events, tasks, cards, cardFiles) => {
 let current_active_btn = today_btn;
 
 today_btn.addEventListener('click', () => {
-  socket.emit('request-data-for-person');
+  requestTodayData();
   current_active_btn.classList.remove('active');
   today_btn.classList.add('active');
   current_active_btn = today_btn;

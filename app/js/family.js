@@ -169,6 +169,9 @@ function renderAll(events, tasks, family) {
       </div>
     `;
   });
+  if (family_events_and_tasks_wrapper.innerHTML === "") {
+    family_events_and_tasks_wrapper.innerHTML = '<p class="empty_family_item">Empty 🌿</p>';
+  }
 }
 
 

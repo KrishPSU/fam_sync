@@ -14,6 +14,9 @@ const leave_family_btn = document.getElementById('leave-family-btn');
 
 function openFamilyModal() {
   family_modal_error.classList.add('hidden');
+  family_in_view.classList.add('hidden');
+  family_out_view.classList.add('hidden');
+  document.getElementById('family-modal-loader').classList.remove('hidden');
   family_modal.classList.remove('hidden');
   socket.emit('request-family-info'); // server replies family-info or no-family
 }
@@ -32,6 +35,7 @@ document.getElementById('close-family-modal-btn-2').addEventListener('click', cl
 
 
 function renderInFamily(info) {
+  document.getElementById('family-modal-loader').classList.add('hidden');
   family_out_view.classList.add('hidden');
   family_in_view.classList.remove('hidden');
   family_name_display.textContent = info.name;
@@ -45,6 +49,7 @@ function renderInFamily(info) {
 }
 
 function renderNoFamily() {
+  document.getElementById('family-modal-loader').classList.add('hidden');
   family_in_view.classList.add('hidden');
   family_out_view.classList.remove('hidden');
 }
@@ -59,7 +64,7 @@ socket.on('family-joined', (info) => {
   renderInFamily(info);
   setPrivacyTogglesVisible(true);
   // Now that we belong to a family, (re)load the user + family data.
-  socket.emit('request-data-for-person');
+  requestTodayData();
   socket.emit('request-family-events-and-tasks');
 });
 
@@ -74,7 +79,7 @@ socket.on('left-family', () => {
   renderNoFamily();
   setPrivacyTogglesVisible(false);
   // Today + family views are now empty (no family) — refresh them.
-  socket.emit('request-data-for-person');
+  requestTodayData();
   socket.emit('request-family-events-and-tasks');
 });
 

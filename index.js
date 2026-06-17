@@ -344,6 +344,7 @@ io.on("connection", function (socket) {
       .from('tasks')
       .select()
       .eq('user_id', userId)
+      .order('created_at', { ascending: true })
 
     if (error) {
       console.error(error);
@@ -357,6 +358,7 @@ io.on("connection", function (socket) {
     const { data, error } = await socket.userSupabase
       .from('cards')
       .select('*, owner:profiles!user_id(display_name)')
+      .order('created_at', { ascending: false })
 
     if (error) {
       console.error(error);

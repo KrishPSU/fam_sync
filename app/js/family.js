@@ -89,9 +89,9 @@ function renderTasks(tasks, family) {
     tasks_for_person.forEach((task) => {
 
       if (task.complete) {
-        tasks_text += `<label class="task completed">— ${task.title}</label><br>`;
+        tasks_text += `<label class="task completed">— ${task.title}</label>`;
       } else {
-        tasks_text += `<label class="task">— ${task.title}</label><br>`;
+        tasks_text += `<label class="task">— ${task.title}</label>`;
       }
     });
 

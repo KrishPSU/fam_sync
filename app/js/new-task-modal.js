@@ -29,7 +29,7 @@ task_form.addEventListener('submit', function(e) {
 
   console.log(`Task added:\n${data.title}`);
   // createClientTask(data.title);
-  socket.emit('new-task', data.title, me, delete_task_at_end_of_day_toggle.checked);
+  socket.emit('new-task', data.title, delete_task_at_end_of_day_toggle.checked);
   close_new_task_modal();
   this.reset();
 });

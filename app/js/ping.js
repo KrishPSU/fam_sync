@@ -11,8 +11,8 @@ socket.on('family-members', (family_members) => {
   members_dropdown.innerHTML = `<option value="">-- Choose --</option>`;
   members_dropdown.innerHTML += `<option value="all">All</option>`;
   family_members.forEach((member) => {
-    if (member != me) {
-      members_dropdown.innerHTML += `<option value="${member}">${uppercaseFirstLetter(member)}</option>`;
+    if (member.id !== me) {
+      members_dropdown.innerHTML += `<option value="${member.id}">${member.display_name}</option>`;
     }
   });
 });
@@ -22,9 +22,7 @@ socket.on('family-members', (family_members) => {
 
 // Register with the server
 async function register() {
-  console.log(me);
-  // alert("Registering, " + me);
-  socket.emit('register', me);
+  socket.emit('register');
 
   const permission = await Notification.requestPermission();
   // alert(permission);
@@ -38,7 +36,7 @@ async function register() {
     applicationServerKey: urlBase64ToUint8Array('BN6FDGyUdl1Or_EP1uWm-Wyt6L5Up2wvnBm6iFZKwgRV-Qd3g69KPQSMqVawOc_LSrvPi_4Ivhmrm4DJOMQHoLs')
   });
 
-  socket.emit('save-subscription', me, sub);
+  socket.emit('save-subscription', sub);
 };
 
 document.getElementById('ping-submit-btn').addEventListener('click', (e) => {
@@ -50,7 +48,7 @@ document.getElementById('ping-submit-btn').addEventListener('click', (e) => {
   if (to == "" || title.trim() == "" || message.trim() == "") return;
 
   console.log("pinging..");
-  socket.emit('pingUser', to, uppercaseFirstLetter(me), title, message);
+  socket.emit('pingUser', to, title, message);
 });
 
 // Helper

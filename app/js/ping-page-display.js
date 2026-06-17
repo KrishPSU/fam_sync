@@ -39,32 +39,34 @@ socket.on('messages-retrieved', (messagesData) =>{
   received_messages_wrapper.innerHTML = "";
 
   for (let i=0; i<messagesData.length; i++) {
-    let sender = messagesData[i].from;
-    let recepient = messagesData[i].to;
+    let senderId = messagesData[i].from_id;
+    let recipientId = messagesData[i].to_id;            // null = broadcast to family
+    let senderName = messagesData[i].sender?.display_name || '';
+    let recipientName = messagesData[i].recipient?.display_name || 'Everyone';
     let title = messagesData[i].title;
     let messageText = messagesData[i].message;
     let time = formatTo12Hour(messagesData[i].created_at);
-    if (sender == uppercaseFirstLetter(me)) {
+    if (senderId === me) {
       const message = `
         <div class="message">
           <div class="message-header">
             <strong class="message-title">${title}</strong>
             <span class="message-timestamp">${time}</span>
           </div>
-          <p class="message-from">To: ${uppercaseFirstLetter(recepient)}</p>
+          <p class="message-from">To: ${recipientName}</p>
           <p class="message-body">${messageText}</p>
         </div>
       `;
       sent_messages_wrapper.innerHTML += message;
       sentMessages++;
-    } else if (recepient == me || recepient == 'all') {
+    } else if (recipientId === me || recipientId === null) {
       const message = `
         <div class="message">
           <div class="message-header">
             <strong class="message-title">${title}</strong>
             <span class="message-timestamp">${time}</span>
           </div>
-          <p class="message-from">From: ${uppercaseFirstLetter(sender)}</p>
+          <p class="message-from">From: ${senderName}</p>
           <p class="message-body">${messageText}</p>
         </div>
       `;

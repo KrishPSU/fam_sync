@@ -1,19 +1,23 @@
-
-const submit_person_btn = document.querySelector('.btn-continue');
-const name_dropdown = document.getElementById('name');
-
-
-window.addEventListener('load', () => {
-  const person = localStorage.getItem("person");
-  if (person !== null) {
-    window.location.href = `/${person}`
+// As soon as a session exists, go to the app. This fires both when the user is
+// already signed in (INITIAL_SESSION) and right after returning from Google
+// (SIGNED_IN) — supabase-js exchanges the OAuth code automatically on load.
+_supabase.auth.onAuthStateChange((event, session) => {
+  if (session) {
+    window.location.replace(`/app/${session.user.id}`);
   }
 });
 
+document.getElementById('googleSigninBtn').addEventListener('click', async () => {
+  const errorEl = document.getElementById('signin-error');
+  errorEl.classList.add('hidden');
 
-submit_person_btn.addEventListener('click', () => {
-  if (name_dropdown.value == "") return;
-  // console.log(name_dropdown.value);
-  localStorage.setItem("person", name_dropdown.value);
-  window.location.href = `/${name_dropdown.value}`;
+  const { error } = await _supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + '/signin' }
+  });
+
+  if (error) {
+    errorEl.textContent = error.message;
+    errorEl.classList.remove('hidden');
+  }
 });

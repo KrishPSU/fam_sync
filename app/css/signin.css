@@ -63,3 +63,35 @@ select {
 .btn-continue:hover {
   background-color: #005fd1;
 }
+
+.btn-google-signin {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.85rem;
+  font-size: 1rem;
+  background-color: #fff;
+  color: #3c4043;
+  border: 1px solid #dadce0;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-google-signin:hover {
+  background-color: #f7f8f8;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.signin-error {
+  color: #d23b3b;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.hidden {
+  display: none;
+}

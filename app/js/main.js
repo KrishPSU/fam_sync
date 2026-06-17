@@ -1,4 +1,4 @@
-const socket = io();
+const socket = io({ autoConnect: false }); // connect only once we have a JWT
 
 
 const today_btn = document.getElementById('today-button');
@@ -18,11 +18,46 @@ closeAiBtn.addEventListener('click', () => {
   aiWindow.classList.add('hidden');
 });
 
-let me;
-window.addEventListener('load', () => {
-  me = window.location.pathname.split('/').join('');
+let me;            // current user's UUID
+let myDisplayName; // current user's Google display name
+
+window.addEventListener('load', async () => {
+  const session = await getSession();
+  if (!session) {
+    window.location.href = '/signin';
+    return;
+  }
+
+  me = session.user.id;
+  myDisplayName = session.user.user_metadata?.full_name || session.user.email;
+
+  // Authenticate the socket handshake with the access token, then connect.
+  socket.auth = { token: session.access_token };
+  socket.connect();
+
+  // Keep the socket's token fresh when supabase-js rotates it (~hourly).
+  _supabase.auth.onAuthStateChange((event, newSession) => {
+    if (event === 'TOKEN_REFRESHED' && newSession) {
+      socket.auth = { token: newSession.access_token };
+      socket.disconnect().connect();
+    }
+  });
+
   // register();
-  socket.emit('request-data-for-person', me);
+  socket.emit('request-data-for-person');
+});
+
+// Sign out: drop the socket, clear the Supabase session, return to sign-in.
+document.getElementById('signout-btn').addEventListener('click', async () => {
+  socket.disconnect();
+  await _supabase.auth.signOut();
+  window.location.href = '/signin';
+});
+
+// Shown when the signed-in user hasn't been added to a family yet.
+socket.on('no-family', () => {
+  const banner = document.getElementById('no-family-banner');
+  if (banner) banner.style.display = 'block';
 });
 
 
@@ -73,7 +108,7 @@ function addTaskToList(task, task_id, isComplete) {
 }
 
 
-function addCardToList(title, description, cardOwner, cardId, files = []) {
+function addCardToList(title, description, cardOwnerId, ownerName, cardId, files = []) {
   if (files.length > 0) cardFilesMap[cardId] = files;
 
   const attachmentBtn = files.length > 0
@@ -86,7 +121,7 @@ function addCardToList(title, description, cardOwner, cardId, files = []) {
   const section_elem = document.createElement('section');
   let innerHtml;
 
-  if (cardOwner == me) {
+  if (cardOwnerId == me) {
     innerHtml = `
       <section class="card" id="${cardId}">
         <div class="card-top">
@@ -106,7 +141,7 @@ function addCardToList(title, description, cardOwner, cardId, files = []) {
   } else {
     innerHtml = `
       <section class="card" id="${cardId}">
-        <h2>${title} - ${uppercaseFirstLetter(cardOwner)}</h2>
+        <h2>${title} - ${ownerName || ''}</h2>
         <div class="card-content">
           <p>${description}</p>
           ${attachmentBtn}
@@ -153,7 +188,7 @@ socket.on('data-for-person', (events, tasks, cards, cardFiles) => {
       });
     }
     cards.forEach((card) => {
-      addCardToList(card.title, card.description, card.person, card.id, filesForCard[card.id] || []);
+      addCardToList(card.title, card.description, card.user_id, card.owner?.display_name, card.id, filesForCard[card.id] || []);
     });
   }
 });
@@ -164,7 +199,7 @@ socket.on('data-for-person', (events, tasks, cards, cardFiles) => {
 let current_active_btn = today_btn;
 
 today_btn.addEventListener('click', () => {
-  socket.emit('request-data-for-person', me);
+  socket.emit('request-data-for-person');
   current_active_btn.classList.remove('active');
   today_btn.classList.add('active');
   current_active_btn = today_btn;

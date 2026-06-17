@@ -39,10 +39,10 @@ function renderEvents(events, family) {
 
   let groupedEvents = groupedItemsByPerson(events);
 
-  family.forEach((person) => {
-    if (person == me) return;
-    if (!groupedEvents[person]) return;
-    let events_for_person = groupedEvents[person];
+  family.forEach((profile) => {
+    if (profile.id === me) return;
+    if (!groupedEvents[profile.id]) return;
+    let events_for_person = groupedEvents[profile.id];
     let events_text = "";
 
     const sortedEventsForPerson = sortEventsForPerson(events_for_person);
@@ -54,7 +54,7 @@ function renderEvents(events, family) {
 
     family_events_wrapper.innerHTML += `
       <div class="family-member">
-        <h2>${uppercaseFirstLetter(person)}</h2>
+        <h2>${profile.display_name}</h2>
         <ul>
           ${events_text}
         </ul>
@@ -80,10 +80,10 @@ function renderTasks(tasks, family) {
 
   // console.log(groupedTasks);
 
-  family.forEach((person) => {
-    if (person == me) return;
-    if (!groupedTasks[person]) return;
-    let tasks_for_person = groupedTasks[person];
+  family.forEach((profile) => {
+    if (profile.id === me) return;
+    if (!groupedTasks[profile.id]) return;
+    let tasks_for_person = groupedTasks[profile.id];
     let tasks_text = "";
 
     tasks_for_person.forEach((task) => {
@@ -97,7 +97,7 @@ function renderTasks(tasks, family) {
 
     family_tasks_wrapper.innerHTML += `
       <div class="family-member">
-        <h2>${uppercaseFirstLetter(person)}</h2>
+        <h2>${profile.display_name}</h2>
         <ul>
           ${tasks_text}
         </ul>
@@ -122,14 +122,14 @@ function renderAll(events, tasks, family) {
   let groupedEvents = groupedItemsByPerson(events);
   let groupedTasks = groupedItemsByPerson(tasks);
 
-  family.forEach((person) => {
-    if (person == me) return;
+  family.forEach((profile) => {
+    if (profile.id === me) return;
     let events_text = "";
     let tasks_text = "";
-    if (!groupedEvents[person]) {
+    if (!groupedEvents[profile.id]) {
       events_text = "<i>No events</i>";
     } else {
-      let events_for_person = groupedEvents[person];
+      let events_for_person = groupedEvents[profile.id];
 
       const sortedEventsForPerson = sortEventsForPerson(events_for_person);
 
@@ -141,10 +141,10 @@ function renderAll(events, tasks, family) {
 
 
 
-    if (!groupedTasks[person]) {
+    if (!groupedTasks[profile.id]) {
       tasks_text = "<i>No tasks</i>";
     } else {
-      let tasks_for_person = groupedTasks[person];
+      let tasks_for_person = groupedTasks[profile.id];
 
       tasks_for_person.forEach((task) => {
 
@@ -161,7 +161,7 @@ function renderAll(events, tasks, family) {
 
     family_events_and_tasks_wrapper.innerHTML += `
       <div class="family-member">
-        <h2>${uppercaseFirstLetter(person)}</h2>
+        <h2>${profile.display_name}</h2>
         <ul>
           ${events_text}
         </ul>
@@ -176,18 +176,14 @@ function renderAll(events, tasks, family) {
 
 
 function groupedItemsByPerson(items) {
-  const groupedByPerson = items.reduce((acc, item) => {
-
-    const { person } = item;
-
-    if (!acc[person]) {
-      acc[person] = []; // start new array for person if not seen yet
+  return items.reduce((acc, item) => {
+    const key = item.user_id;            // group by owner UUID
+    if (!acc[key]) {
+      acc[key] = []; // start new array for this user if not seen yet
     }
-    acc[person].push(item); // add the event to that person's array
-    return acc; // return updated grouping
-  }, {}); // ← initial value is an empty object
-
-  return groupedByPerson;
+    acc[key].push(item);
+    return acc;
+  }, {});
 }
 
 

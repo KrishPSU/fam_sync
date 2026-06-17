@@ -15,6 +15,23 @@ const { createClient } = require('@supabase/supabase-js')
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
+// Verify a Supabase JWT and return the auth user (or null). Uses the admin
+// client so the signature is validated server-side without anon rate limits.
+async function verifyToken(token) {
+  if (!token) return null;
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+  return error ? null : user;
+}
+
+// A Supabase client scoped to one user's JWT. All user-context queries go
+// through this so RLS policies are enforced (never use supabaseAdmin for those).
+function scopedClient(token) {
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+}
+
 
 
 
@@ -44,9 +61,9 @@ app.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "https://api.weather.gov", supabaseOrigin],
-      imgSrc: ["'self'", "data:", "https://img.icons8.com", supabaseOrigin],
-      scriptSrc: ["'self'"],
+      connectSrc: ["'self'", "https://api.weather.gov", supabaseOrigin, "https://cdn.jsdelivr.net"],
+      imgSrc: ["'self'", "data:", "https://img.icons8.com", supabaseOrigin, "https://lh3.googleusercontent.com"],
+      scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       frameSrc: [supabaseOrigin],
     },
@@ -60,23 +77,34 @@ app.use(
 //     next();
 // });
 
-const chavans = ["sandeep", "smita", "aarav", "krish"];
-
 app.post('/api/upload-card-file', upload.single('file'), async (req, res) => {
-  const { cardId, person } = req.body;
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  const user = await verifyToken(token);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { cardId } = req.body;
   const file = req.file;
 
-  if (!file || !cardId || !person) {
+  if (!file || !cardId) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  if (!chavans.includes(person)) {
-    return res.status(403).json({ error: 'Invalid person' });
+  // Only the card's owner may attach files to it.
+  const { data: card } = await supabaseAdmin
+    .from('cards')
+    .select('user_id, family_id')
+    .eq('id', cardId)
+    .single();
+
+  if (!card || card.user_id !== user.id) {
+    return res.status(403).json({ error: 'Forbidden' });
   }
 
   const ext = path.extname(file.originalname);
   const baseName = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9._-]/g, '_');
-  const filePath = `${person}/${cardId}/${Date.now()}_${baseName}${ext}`;
+  const filePath = `${user.id}/${cardId}/${Date.now()}_${baseName}${ext}`;
 
   const { error: storageError } = await supabaseAdmin.storage
     .from('card-attachments')
@@ -98,7 +126,8 @@ app.post('/api/upload-card-file', upload.single('file'), async (req, res) => {
       file_name: file.originalname,
       file_path: filePath,
       file_url: urlData.publicUrl,
-      uploaded_by: person
+      uploader_id: user.id,
+      family_id: card.family_id
     });
 
   if (dbError) {
@@ -118,23 +147,25 @@ app.get('/signin', function(req,res){
   res.sendFile(path.join(__dirname, 'app', 'pages', 'signin.html'));
 });
 
-app.get('/:name', function(req,res){
-  // res.send("Welcome!");
+// Public client config — the anon/publishable key is safe to expose. Keeps the
+// .env file as the single source of truth for the browser's Supabase client.
+app.get('/env.js', function(req, res){
+  res.type('application/javascript');
+  res.send(
+    `window.__ENV = ` + JSON.stringify({
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_ANON_KEY: process.env.SUPABASE_KEY
+    }) + `;`
+  );
+});
 
-  const name = req.params.name;
-
-  let match = false;
-  chavans.forEach((person) => {
-    if (name == person.toLowerCase()) {
-      match = true;
-    }
-  });
-  if (!match) {
-    res.send("Invalid person");
-    return;
+// The app shell. Identity is always taken from the JWT, never this URL param —
+// the uuid here is cosmetic. A malformed uuid just bounces to sign-in.
+app.get('/app/:uuid', function(req, res){
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuid.test(req.params.uuid)) {
+    return res.redirect('/signin');
   }
-
-  res.setHeader("Content-Security-Policy", `default-src 'self'; connect-src 'self' https://api.weather.gov ${supabaseOrigin}; img-src 'self' data: https://img.icons8.com ${supabaseOrigin}; frame-src ${supabaseOrigin}; script-src 'self'; style-src 'self' 'unsafe-inline'`);
   res.sendFile(path.join(__dirname, 'app', 'pages', 'index.html'));
 });
 
@@ -147,14 +178,34 @@ const server = app.listen(process.env.PORT || 3000, () => {
 
 var io = socket(server);
 
+// Authenticate every socket at the handshake. Attaches the verified identity,
+// family, and a JWT-scoped Supabase client (so RLS applies to every query).
+io.use(async (socket, next) => {
+  const token = socket.handshake.auth && socket.handshake.auth.token;
+  const user = await verifyToken(token);
+  if (!user) return next(new Error('Authentication failed'));
+
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('family_id, display_name')
+    .eq('id', user.id)
+    .single();
+
+  socket.userId = user.id;
+  socket.displayName = (profile && profile.display_name) || user.user_metadata?.full_name || user.email;
+  socket.familyId = (profile && profile.family_id) || null;
+  socket.userSupabase = scopedClient(token);
+  next();
+});
+
 
 
 
 
 webPush.setVapidDetails(`mailto:${process.env.PERSONAL_EMAIL}`, process.env.PUBLIC_VAPID_KEY, process.env.PRIVATE_VAPID_KEY);
 
-const users = {};         // { name: socketId }
-const subscriptions = {}; // { name: PushSubscription }
+const users = {};         // { userId: socketId }
+const subscriptions = {}; // { userId: PushSubscription }
 
 
 
@@ -170,7 +221,8 @@ app.get('/api/cleanup', async (req, res) => {
     const deleteTables = ['tasks', 'events', 'cards', 'messages'];
 
     for (const table of deleteTables) {
-      const { error } = await supabase
+      // Admin client bypasses RLS — this is a trusted cron gated by CRON_SECRET_KEY.
+      const { error } = await supabaseAdmin
         .from(table)
         .delete()
         .eq('delete_at_day_end', true); // UUID-safe
@@ -198,12 +250,22 @@ io.on("connection", function (socket) {
 
   console.log("New socket connection!");
 
+  // Scope all real-time broadcasts to the user's family (rooms keyed by family id).
+  if (socket.familyId) {
+    socket.join(socket.familyId);
+  } else {
+    // No family yet → secure default: the user can read/write nothing. Tell the
+    // client so it can show a friendly "ask to be added" banner.
+    socket.emit('no-family');
+  }
 
 
-  socket.on('new-event', async(title, time, person, deleteAtEndOfDay) => {
-    const { data, error } = await supabase
+
+  socket.on('new-event', async(title, time, deleteAtEndOfDay) => {
+    if (!socket.familyId) return;
+    const { data, error } = await socket.userSupabase
       .from('events')
-      .insert({ title: title, time: time, person: person, delete_at_day_end: deleteAtEndOfDay })
+      .insert({ title: title, time: time, user_id: socket.userId, family_id: socket.familyId, delete_at_day_end: deleteAtEndOfDay })
       .select()
 
     if (error) {
@@ -215,10 +277,11 @@ io.on("connection", function (socket) {
 
 
 
-  socket.on('new-task', async(task, person, deleteAtEndOfDay) => {
-    const { data, error } = await supabase
+  socket.on('new-task', async(task, deleteAtEndOfDay) => {
+    if (!socket.familyId) return;
+    const { data, error } = await socket.userSupabase
       .from('tasks')
-      .insert({ title: task, person: person, delete_at_day_end: deleteAtEndOfDay })
+      .insert({ title: task, user_id: socket.userId, family_id: socket.familyId, delete_at_day_end: deleteAtEndOfDay })
       .select()
 
     if (error) {
@@ -230,25 +293,26 @@ io.on("connection", function (socket) {
 
 
 
-  socket.on('new-card', async(title, description, person, deleteAtEndOfDay) => {
-    const { data, error } = await supabase
+  socket.on('new-card', async(title, description, deleteAtEndOfDay) => {
+    if (!socket.familyId) return;
+    const { data, error } = await socket.userSupabase
       .from('cards')
-      .insert({ title: title, description: description, person: person, delete_at_day_end: deleteAtEndOfDay })
+      .insert({ title: title, description: description, user_id: socket.userId, family_id: socket.familyId, delete_at_day_end: deleteAtEndOfDay })
       .select()
 
     if (error) {
       console.error(error);
     } else {
-      io.emit('update-cards', title, description, person, data[0].id);
+      io.to(socket.familyId).emit('update-cards', title, description, socket.userId, socket.displayName, data[0].id);
       socket.emit('card-created', data[0].id);
     }
   });
 
 
 
-  socket.on('request-data-for-person', async(person) => {
-    const events = await getEventsForPerson(person);
-    const tasks = await getTasksForPerson(person);
+  socket.on('request-data-for-person', async() => {
+    const events = await getEventsForPerson(socket.userId);
+    const tasks = await getTasksForPerson(socket.userId);
     const cards = await getCards();
     const cardFiles = await getCardFiles(cards ? cards.map(c => c.id) : []);
     socket.emit('data-for-person', events, tasks, cards, cardFiles);
@@ -256,11 +320,11 @@ io.on("connection", function (socket) {
 
 
 
-  async function getEventsForPerson(person) {
-    const { data, error } = await supabase
+  async function getEventsForPerson(userId) {
+    const { data, error } = await socket.userSupabase
       .from('events')
       .select()
-      .eq('person', person)
+      .eq('user_id', userId)
 
     if (error) {
       console.error(error);
@@ -270,11 +334,11 @@ io.on("connection", function (socket) {
   }
 
 
-  async function getTasksForPerson(person) {
-    const { data, error } = await supabase
+  async function getTasksForPerson(userId) {
+    const { data, error } = await socket.userSupabase
       .from('tasks')
       .select()
-      .eq('person', person)
+      .eq('user_id', userId)
 
     if (error) {
       console.error(error);
@@ -285,9 +349,9 @@ io.on("connection", function (socket) {
 
 
   async function getCards() {
-    const { data, error } = await supabase
+    const { data, error } = await socket.userSupabase
       .from('cards')
-      .select()
+      .select('*, owner:profiles!user_id(display_name)')
 
     if (error) {
       console.error(error);
@@ -299,7 +363,7 @@ io.on("connection", function (socket) {
 
   async function getCardFiles(cardIds) {
     if (!cardIds || cardIds.length === 0) return [];
-    const { data, error } = await supabase
+    const { data, error } = await socket.userSupabase
       .from('card_files')
       .select()
       .in('card_id', cardIds);
@@ -308,21 +372,35 @@ io.on("connection", function (socket) {
   }
 
 
+  // Same-family member profiles, for the family view + ping dropdown.
+  async function getFamilyMembers() {
+    if (!socket.familyId) return [];
+    const { data, error } = await socket.userSupabase
+      .from('profiles')
+      .select('id, display_name')
+      .eq('family_id', socket.familyId)
+      .order('display_name');
+    if (error) { console.error(error); return []; }
+    return data || [];
+  }
+
+
 
   socket.on('request-family-events', async() => {
-    socket.emit('family-events', await getFamilyEvents(), chavans.sort());
+    socket.emit('family-events', await getFamilyEvents(), await getFamilyMembers());
   });
 
   socket.on('request-family-tasks', async() => {
-    socket.emit('family-tasks', await getFamilyTasks(), chavans.sort());
+    socket.emit('family-tasks', await getFamilyTasks(), await getFamilyMembers());
   });
 
   socket.on('request-family-events-and-tasks', async() => {
-    socket.emit('family-events-and-tasks', await getFamilyEvents(), await getFamilyTasks(), chavans.sort());
+    socket.emit('family-events-and-tasks', await getFamilyEvents(), await getFamilyTasks(), await getFamilyMembers());
   });
 
   async function getFamilyEvents() {
-    const { data, error } = await supabase
+    // RLS scopes this to the caller's family automatically.
+    const { data, error } = await socket.userSupabase
       .from('events')
       .select()
 
@@ -335,7 +413,7 @@ io.on("connection", function (socket) {
 
 
   async function getFamilyTasks() {
-    const { data, error } = await supabase
+    const { data, error } = await socket.userSupabase
       .from('tasks')
       .select()
 
@@ -349,8 +427,8 @@ io.on("connection", function (socket) {
 
 
 
-  socket.on('request-family-members', () => {
-    socket.emit('family-members', chavans.sort());
+  socket.on('request-family-members', async () => {
+    socket.emit('family-members', await getFamilyMembers());
   });
 
 
@@ -359,12 +437,25 @@ io.on("connection", function (socket) {
   // Card Deletion / Edits
 
   socket.on('delete-card', async (cardId) => {
-    // Fetch file paths before cascade-delete removes them
-    const { data: files } = await supabase
+    // Read file paths first (a family member may read these).
+    const { data: files } = await socket.userSupabase
       .from('card_files')
       .select('file_path')
       .eq('card_id', cardId);
 
+    // Delete the card — RLS only permits this if the caller owns it.
+    const { data, error } = await socket.userSupabase
+      .from('cards')
+      .delete()
+      .eq('id', cardId)
+      .select()
+
+    if (error || !data || data.length === 0) {
+      if (error) console.error(error);
+      return; // not the owner / not found — leave storage untouched
+    }
+
+    // Card row gone (cascade removed card_files); clean up storage objects.
     if (files && files.length > 0) {
       const { error: storageError } = await supabaseAdmin.storage
         .from('card-attachments')
@@ -372,33 +463,22 @@ io.on("connection", function (socket) {
       if (storageError) console.error('Storage deletion error:', storageError);
     }
 
-    const { data, error } = await supabase
-      .from('cards')
-      .delete()
-      .eq('id', cardId)
-      .select()
-
-    if (error) {
-      console.error(error);
-    } else {
-      socket.broadcast.emit('card-deletion', cardId);
-    }
+    socket.to(socket.familyId).emit('card-deletion', cardId);
   });
 
 
   socket.on('edit-card', async (cardId, title, description) => {
-    const { data, error } = await supabase
+    const { data, error } = await socket.userSupabase
       .from('cards')
       .update({ title: title, description: description })
       .eq('id', cardId)
       .select()
 
-    if (error) {
-      console.error(error);
-    } else {
-      // return data;
-      socket.broadcast.emit('card-edit-complete', cardId, title, description, data[0].person);
+    if (error || !data || data.length === 0) {
+      if (error) console.error(error);
+      return; // RLS blocked (not owner) or not found
     }
+    socket.to(socket.familyId).emit('card-edit-complete', cardId, title, description, socket.displayName);
   });
 
 
@@ -411,7 +491,7 @@ io.on("connection", function (socket) {
   // Task completion
 
   socket.on('task-crossed', async(taskId, isComplete) => {
-    const { data, error } = await supabase
+    const { data, error } = await socket.userSupabase
       .from('tasks')
       .update({ complete: isComplete })
       .eq('id', taskId)
@@ -429,7 +509,7 @@ io.on("connection", function (socket) {
   // Task and Event deletion
 
   socket.on('delete-task', async (taskId) => {
-    const { data, error } = await supabase
+    const { data, error } = await socket.userSupabase
       .from('tasks')
       .delete()
       .eq('id', taskId)
@@ -444,7 +524,7 @@ io.on("connection", function (socket) {
 
 
   socket.on('delete-event', async (eventId) => {
-    const { data, error } = await supabase
+    const { data, error } = await socket.userSupabase
       .from('events')
       .delete()
       .eq('id', eventId)
@@ -465,33 +545,58 @@ io.on("connection", function (socket) {
   // Web Push Notifications
 
 
-  socket.on('register', (name) => {
-    console.log(`registered ${name}`);
-    users[name] = socket.id;
-    console.log(socket.id);
+  socket.on('register', () => {
+    users[socket.userId] = socket.id;
   });
 
-  socket.on('save-subscription', (name, subscription) => {
-    console.log(`subscription for ${name} saved`);
-    // socket.emit('test', `subscription for ${name} saved`);
-    subscriptions[name] = subscription;
-    // console.log(subscription);
+  socket.on('save-subscription', (subscription) => {
+    subscriptions[socket.userId] = subscription;
   });
 
-  socket.on('pingUser', (to, from, title, message) => {
-    console.log(`trying to send to ${to} | ${title} --> ${message}`);
+  socket.on('pingUser', async (to, title, message) => {
+    if (!socket.familyId) return;
+    const from = socket.displayName;
 
-    if (to == "all") {
-      // socket.emit('client-print', subscriptions);
-      chavans.forEach((person) => {
-        if (person == from.toLowerCase()) return;
-        sendPing(subscriptions[person], to, from, title, message);
+    if (to === 'all') {
+      const members = await getFamilyMembers();
+      members.forEach((m) => {
+        if (m.id === socket.userId) return;
+        if (subscriptions[m.id]) sendPing(subscriptions[m.id], from, title, message);
       });
+      await recordMessage(null, title, message);   // to_id NULL = family broadcast
+      socket.emit('registered-and-sent', 'everyone');
+      return;
+    }
+
+    // Direct ping — the recipient must be in the caller's family.
+    const { data: recipient } = await supabaseAdmin
+      .from('profiles')
+      .select('id, display_name, family_id')
+      .eq('id', to)
+      .single();
+
+    if (!recipient || recipient.family_id !== socket.familyId) {
+      socket.emit('not-registered-for-notis', 'that person');
+      return;
+    }
+
+    await recordMessage(recipient.id, title, message);
+
+    if (subscriptions[to]) {
+      sendPing(subscriptions[to], from, title, message);
+      socket.emit('registered-and-sent', recipient.display_name);
     } else {
-      const subscription = subscriptions[to];
-      sendPing(subscription, to, from, title, message);
-    } 
+      socket.emit('not-registered-for-notis', recipient.display_name);
+    }
   });
+
+  // Persist a ping as a message row (RLS enforces from_id = caller + same family).
+  async function recordMessage(toId, title, message) {
+    const { error } = await socket.userSupabase
+      .from('messages')
+      .insert({ from_id: socket.userId, to_id: toId, family_id: socket.familyId, title: title, message: message });
+    if (error) console.error(error);
+  }
 
 
 
@@ -521,29 +626,15 @@ io.on("connection", function (socket) {
 
 
 
-  async function sendPing(subscription, to, from, title, message) {
-    if (subscription) {
-      const formattedTitle = `${from} pinged you: ${title}`; // e.g. "Krish pinged you: Reminder"
-      const payload = JSON.stringify({
-        title: formattedTitle,
-        body: message
-      });
-      webPush.sendNotification(subscription, payload).catch(console.error);
-      console.log(`Noti sent to ${to}`);
-      socket.emit('registered-and-sent', to);
-      const { data, error } = await supabase
-        .from('messages')
-        .insert({ to: to, from: from, title: title, message: message })
-
-      if (error) {
-        console.error(error);
-      } else {
-        // return data;
-      }
-    } else {
-      // console.log(`${to} is not registered : ${subscription}`);
-      socket.emit('not-registered-for-notis', to);
-    }
+  // Push a web-push notification. Message persistence + client acks are handled
+  // by the caller (pingUser / recordMessage), so this just fires the notification.
+  function sendPing(subscription, from, title, message) {
+    if (!subscription) return;
+    const payload = JSON.stringify({
+      title: `${from} pinged you: ${title}`, // e.g. "Krish Chavan pinged you: Reminder"
+      body: message
+    });
+    webPush.sendNotification(subscription, payload).catch(console.error);
   }
 
 
@@ -586,9 +677,11 @@ io.on("connection", function (socket) {
 
 
   socket.on('get-messages', async () => {
-    const { data, error } = await supabase
+    // RLS scopes to the caller's family + messages they're party to.
+    const { data, error } = await socket.userSupabase
       .from('messages')
-      .select('*')
+      .select('*, sender:profiles!from_id(display_name), recipient:profiles!to_id(display_name)')
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error(error);

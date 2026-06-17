@@ -37,7 +37,7 @@ event_form.addEventListener('submit', function(e) {
   // alert(`Event added:\n${data.title} at ${formattedTime}`);
   console.log(`Event added:\n${data.title} at ${formattedTime}`);
   // createClientEvent(data.title, formattedTime);
-  socket.emit('new-event', data.title, formattedTime, me, delete_event_at_end_of_day_toggle.checked);
+  socket.emit('new-event', data.title, formattedTime, delete_event_at_end_of_day_toggle.checked);
   close_new_event_modal();
   this.reset();
 });

@@ -55,8 +55,8 @@ function editCard(cardId, title, description) {
 }
 
 
-socket.on('update-cards', (title, description, person, cardId) => {
-  addCardToList(title, description, person, cardId);
+socket.on('update-cards', (title, description, ownerId, ownerName, cardId) => {
+  addCardToList(title, description, ownerId, ownerName, cardId);
 });
 
 
@@ -65,11 +65,11 @@ socket.on('card-deletion', (cardId) => {
 });
 
 
-socket.on('card-edit-complete', (cardId, title, description, person) => {
+socket.on('card-edit-complete', (cardId, title, description, ownerName) => {
   const card = document.getElementById(cardId);
   const header = card.querySelector('h2');
   const content = card.querySelector('p');
 
-  header.innerText = `${title} - ${uppercaseFirstLetter(person)}`;
+  header.innerText = `${title} - ${ownerName || ''}`;
   content.innerHTML = description;
 });

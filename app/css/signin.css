@@ -1,6 +1,6 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #f9f9f9;
+  background-color: #0d0d10;
   margin: 0;
   padding: 0;
   display: flex;
@@ -10,22 +10,24 @@ body {
 }
 
 .form-container {
-  background: white;
+  background: #17171c;
+  border: 1px solid rgba(255, 255, 255, 0.07);
   padding: 2rem;
   border-radius: 16px;
   width: 90%;
   max-width: 400px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   text-align: center;
 }
 
 h1 {
+  color: #f0f0f5;
   margin-bottom: 0.5rem;
 }
 
 .subtext {
   font-size: 0.95rem;
-  color: #666;
+  color: #9999aa;
   margin-bottom: 1.5rem;
 }
 
@@ -41,7 +43,9 @@ select {
   padding: 0.75rem;
   font-size: 1.1rem;
   border-radius: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #1e1e25;
+  color: #e8e8ed;
   margin-bottom: 1rem;
   box-sizing: border-box;
 }
@@ -50,7 +54,7 @@ select {
   width: 100%;
   padding: 0.85rem;
   font-size: 1rem;
-  background-color: #007bff;
+  background-color: #2563eb;
   color: white;
   border: none;
   border-radius: 12px;
@@ -61,7 +65,7 @@ select {
 }
 
 .btn-continue:hover {
-  background-color: #005fd1;
+  background-color: #1d4ed8;
 }
 
 .btn-google-signin {
@@ -72,9 +76,9 @@ select {
   gap: 0.6rem;
   padding: 0.85rem;
   font-size: 1rem;
-  background-color: #fff;
-  color: #3c4043;
-  border: 1px solid #dadce0;
+  background-color: #1e1e25;
+  color: #e8e8ed;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   cursor: pointer;
   font-weight: 500;
@@ -82,12 +86,12 @@ select {
 }
 
 .btn-google-signin:hover {
-  background-color: #f7f8f8;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  background-color: #25252e;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
 }
 
 .signin-error {
-  color: #d23b3b;
+  color: #f87171;
   font-size: 0.9rem;
   margin-top: 1rem;
 }

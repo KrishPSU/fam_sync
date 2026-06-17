@@ -5,12 +5,14 @@ body {
   margin: 0;
   padding: 1.2rem;
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .landing-container {
   max-width: 900px;
   margin: auto;
-  padding: 2.5rem 2rem 2.5rem 2rem;
+  padding: 2.5rem 2rem;
+  box-sizing: border-box;
 }
 
 .hero {
@@ -57,7 +59,6 @@ body {
   flex-wrap: wrap;
   gap: 1.5rem;
   justify-content: center;
-  flex-direction: row;
 }
 
 .feature {
@@ -66,9 +67,10 @@ body {
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
   padding: 1.5rem 1rem;
-  flex: 1 1 220px;
-  min-width: 220px;
+  flex: 1 1 200px;
+  min-width: 0;
   max-width: 270px;
+  box-sizing: border-box;
   text-align: center;
   transition: box-shadow 0.2s, transform 0.2s;
 }
@@ -94,20 +96,18 @@ body {
   font-size: 1rem;
 }
 
-@media (max-width: 800px) {
-  .features {
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-  }
-  .feature {
-    width: 100%;
-    max-width: 340px;
-  }
+@media (max-width: 600px) {
   .landing-container {
-    padding: 1rem 2px;
+    padding: 1rem 0.75rem;
   }
   .hero {
-    padding: 1.5rem 0.5rem 1rem 0.5rem;
+    padding: 1.5rem 0.75rem 1rem 0.75rem;
+  }
+  .features {
+    gap: 0.75rem;
+  }
+  .feature {
+    flex: 1 1 100%;
+    max-width: 100%;
   }
 }

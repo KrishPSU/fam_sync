@@ -2,6 +2,7 @@ const new_card_button = document.querySelector('.new-card-button');
 const close_new_card_modal_button = document.querySelector('#close-card-modal-btn');
 const card_form = document.getElementById('cardForm');
 const delete_card_at_end_of_day_toggle = card_form.querySelector('input[name="deleteAtEnd"]');
+const card_privacy_toggle = document.getElementById('card-privacy-toggle');
 const card_file_input = document.getElementById('card-file-input');
 const attach_file_btn = document.getElementById('attach-file-btn');
 const attached_file_name = document.getElementById('attached-file-name');
@@ -48,7 +49,7 @@ card_form.addEventListener('submit', function(e) {
   let title = data.title;
   let description = document.getElementById('card-description').value;
 
-  socket.emit('new-card', title, description, delete_card_at_end_of_day_toggle.checked);
+  socket.emit('new-card', title, description, delete_card_at_end_of_day_toggle.checked, card_privacy_toggle.checked);
   close_new_card_modal();
   this.reset();
   attached_file_name.textContent = '';

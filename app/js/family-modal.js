@@ -57,6 +57,7 @@ socket.on('family-joined', (info) => {
   const banner = document.getElementById('no-family-banner');
   if (banner) banner.style.display = 'none';
   renderInFamily(info);
+  setPrivacyTogglesVisible(true);
   // Now that we belong to a family, (re)load the user + family data.
   socket.emit('request-data-for-person');
   socket.emit('request-family-events-and-tasks');
@@ -71,6 +72,7 @@ socket.on('left-family', () => {
   const banner = document.getElementById('no-family-banner');
   if (banner) banner.style.display = 'block';
   renderNoFamily();
+  setPrivacyTogglesVisible(false);
   // Today + family views are now empty (no family) — refresh them.
   socket.emit('request-data-for-person');
   socket.emit('request-family-events-and-tasks');

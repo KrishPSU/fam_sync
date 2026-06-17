@@ -429,6 +429,47 @@ input[type="checkbox"] {
   padding: 6px 0;
 }
 
+/* Public visibility pill — shown on own public events, tasks, and cards */
+.public-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border-radius: 20px;
+  background: #e8f0fe;
+  color: #1a73e8;
+  white-space: nowrap;
+  vertical-align: middle;
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+
+body.dark-mode .public-pill {
+  background: #1e3a5f;
+  color: #7ab3f0;
+}
+
+/* Card header left group: pill + title sit together on the left */
+.card-top-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.card-top-left h2 {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Task left group: pill + label sit together on the left */
+.task-item-left {
+  display: flex;
+  align-items: center;
+}
+
 /* Dark mode toggle switch */
 .dark-mode-toggle {
   position: absolute;

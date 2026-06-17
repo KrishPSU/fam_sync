@@ -2,6 +2,7 @@ const new_event_button = document.querySelector('#new-event-btn');
 const close_new_event_modal_button = document.querySelector('#close-event-modal-btn');
 const event_form = document.getElementById('eventForm');
 const delete_event_at_end_of_day_toggle = event_form.querySelector('input[name="deleteAtEnd"]');
+const event_privacy_toggle = document.getElementById('event-privacy-toggle');
 
 
 new_event_button.addEventListener('click', () => {
@@ -37,14 +38,14 @@ event_form.addEventListener('submit', function(e) {
   // alert(`Event added:\n${data.title} at ${formattedTime}`);
   console.log(`Event added:\n${data.title} at ${formattedTime}`);
   // createClientEvent(data.title, formattedTime);
-  socket.emit('new-event', data.title, formattedTime, delete_event_at_end_of_day_toggle.checked);
+  socket.emit('new-event', data.title, formattedTime, delete_event_at_end_of_day_toggle.checked, event_privacy_toggle.checked);
   close_new_event_modal();
   this.reset();
 });
 
 
-socket.on('event-created-successfully', (event, eventId, time) => {
-  addEventToList(event, eventId, time);
+socket.on('event-created-successfully', (event, eventId, time, isPrivate) => {
+  addEventToList(event, eventId, time, isPrivate);
 });
 
 

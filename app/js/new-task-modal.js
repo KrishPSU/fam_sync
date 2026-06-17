@@ -2,6 +2,7 @@ const new_task_button = document.querySelector('#new-task-btn');
 const close_new_task_modal_button = document.querySelector('#close-task-modal-btn');
 const task_form = document.getElementById('taskForm');
 const delete_task_at_end_of_day_toggle = task_form.querySelector('input[name="deleteAtEnd"]');
+const task_privacy_toggle = document.getElementById('task-privacy-toggle');
 
 
 
@@ -29,7 +30,7 @@ task_form.addEventListener('submit', function(e) {
 
   console.log(`Task added:\n${data.title}`);
   // createClientTask(data.title);
-  socket.emit('new-task', data.title, delete_task_at_end_of_day_toggle.checked);
+  socket.emit('new-task', data.title, delete_task_at_end_of_day_toggle.checked, task_privacy_toggle.checked);
   close_new_task_modal();
   this.reset();
 });

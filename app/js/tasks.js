@@ -19,6 +19,6 @@ my_tasks_list.addEventListener('click', function (e) {
 });
 
 
-socket.on('task-created-successfully', (task, taskId) => {
-  addTaskToList(task, taskId, false);
+socket.on('task-created-successfully', (task, taskId, isPrivate) => {
+  addTaskToList(task, taskId, false, isPrivate);
 });

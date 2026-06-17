@@ -253,6 +253,7 @@ io.on("connection", function (socket) {
   // Scope all real-time broadcasts to the user's family (rooms keyed by family id).
   if (socket.familyId) {
     socket.join(socket.familyId);
+    socket.emit('in-family');
   } else {
     // No family yet → secure default: the user can read/write nothing. Tell the
     // client so it can show a friendly "ask to be added" banner.
@@ -261,49 +262,53 @@ io.on("connection", function (socket) {
 
 
 
-  socket.on('new-event', async(title, time, deleteAtEndOfDay) => {
+  socket.on('new-event', async(title, time, deleteAtEndOfDay, isPrivate) => {
     if (!socket.familyId) return;
     const { data, error } = await socket.userSupabase
       .from('events')
-      .insert({ title: title, time: time, user_id: socket.userId, family_id: socket.familyId, delete_at_day_end: deleteAtEndOfDay })
+      .insert({ title: title, time: time, user_id: socket.userId, family_id: socket.familyId, delete_at_day_end: deleteAtEndOfDay, is_private: !!isPrivate })
       .select()
 
     if (error) {
       console.error(error);
     } else {
-      socket.emit('event-created-successfully', title, data[0].id, time);
+      socket.emit('event-created-successfully', title, data[0].id, time, data[0].is_private);
     }
   });
 
 
 
-  socket.on('new-task', async(task, deleteAtEndOfDay) => {
+  socket.on('new-task', async(task, deleteAtEndOfDay, isPrivate) => {
     if (!socket.familyId) return;
     const { data, error } = await socket.userSupabase
       .from('tasks')
-      .insert({ title: task, user_id: socket.userId, family_id: socket.familyId, delete_at_day_end: deleteAtEndOfDay })
+      .insert({ title: task, user_id: socket.userId, family_id: socket.familyId, delete_at_day_end: deleteAtEndOfDay, is_private: !!isPrivate })
       .select()
 
     if (error) {
       console.error(error);
     } else {
-      socket.emit('task-created-successfully', task, data[0].id);
+      socket.emit('task-created-successfully', task, data[0].id, data[0].is_private);
     }
   });
 
 
 
-  socket.on('new-card', async(title, description, deleteAtEndOfDay) => {
+  socket.on('new-card', async(title, description, deleteAtEndOfDay, isPrivate) => {
     if (!socket.familyId) return;
     const { data, error } = await socket.userSupabase
       .from('cards')
-      .insert({ title: title, description: description, user_id: socket.userId, family_id: socket.familyId, delete_at_day_end: deleteAtEndOfDay })
+      .insert({ title: title, description: description, user_id: socket.userId, family_id: socket.familyId, delete_at_day_end: deleteAtEndOfDay, is_private: !!isPrivate })
       .select()
 
     if (error) {
       console.error(error);
     } else {
-      io.to(socket.familyId).emit('update-cards', title, description, socket.userId, socket.displayName, data[0].id);
+      if (isPrivate) {
+        socket.emit('update-cards', title, description, socket.userId, socket.displayName, data[0].id, true);
+      } else {
+        io.to(socket.familyId).emit('update-cards', title, description, socket.userId, socket.displayName, data[0].id, false);
+      }
       socket.emit('card-created', data[0].id);
     }
   });

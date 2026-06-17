@@ -228,6 +228,26 @@ input:checked + .slider:before {
   transform: translateX(16px);
 }
 
+/* Privacy toggle row — same layout as delete-end-toggle but with lock-themed color */
+.privacy-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #444;
+  text-align: center;
+}
+
+.privacy-toggle-row input:checked + .slider {
+  background-color: #6c757d;
+}
+
+body.dark-mode .privacy-toggle-row {
+  color: #e3e3e3;
+}
+
 /* ── Card File Viewer Modal ── */
 .card-file-viewer-content {
   width: 80vw;

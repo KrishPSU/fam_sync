@@ -89,10 +89,22 @@ document.getElementById('signout-btn').addEventListener('click', async () => {
   window.location.href = '/signin';
 });
 
+function setPrivacyTogglesVisible(visible) {
+  ['event-privacy-row', 'task-privacy-row', 'card-privacy-row'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('hidden', !visible);
+  });
+}
+
+socket.on('in-family', () => {
+  setPrivacyTogglesVisible(true);
+});
+
 // Shown when the signed-in user hasn't been added to a family yet.
 socket.on('no-family', () => {
   const banner = document.getElementById('no-family-banner');
   if (banner) banner.style.display = 'block';
+  setPrivacyTogglesVisible(false);
 });
 
 
@@ -104,11 +116,12 @@ const cardFilesMap = {};
 
 
 
-function addEventToList(event, event_id, time) {
+function addEventToList(event, event_id, time, isPrivate) {
+  const pill = isPrivate ? '' : '<span class="public-pill">Family</span>';
   const li_elem = document.createElement('li');
   li_elem.classList.add("event-item");
   li_elem.innerHTML = `
-    <span><strong>${time}</strong> — ${event}</span>
+    <span>${pill}<strong>${time}</strong> — ${event}</span>
     <button class="delete-task-and-event-btn">✕</button>
   `;
   li_elem.id = event_id;
@@ -116,25 +129,32 @@ function addEventToList(event, event_id, time) {
 }
 
 
-function addTaskToList(task, task_id, isComplete) {
+function addTaskToList(task, task_id, isComplete, isPrivate) {
+  const pill = isPrivate ? '' : '<span class="public-pill">Family</span>';
   let innerHtml;
   if (isComplete) {
     innerHtml = `
       <div class="task-item">
-        <label class="task completed" id="${task_id}">
-          <input type="checkbox" checked />
-          <span>${task}</span>
-        </label>
+        <div class="task-item-left">
+          ${pill}
+          <label class="task completed" id="${task_id}">
+            <input type="checkbox" checked />
+            <span>${task}</span>
+          </label>
+        </div>
         <button class="delete-task-and-event-btn">✕</button>
       </div>
     `;
   } else {
     innerHtml = `
       <div class="task-item">
-        <label class="task" id="${task_id}">
-          <input type="checkbox" />
-          <span>${task}</span>
-        </label>
+        <div class="task-item-left">
+          ${pill}
+          <label class="task" id="${task_id}">
+            <input type="checkbox" />
+            <span>${task}</span>
+          </label>
+        </div>
         <button class="delete-task-and-event-btn">✕</button>
       </div>
     `;
@@ -143,7 +163,7 @@ function addTaskToList(task, task_id, isComplete) {
 }
 
 
-function addCardToList(title, description, cardOwnerId, ownerName, cardId, files = []) {
+function addCardToList(title, description, cardOwnerId, ownerName, cardId, files = [], isPrivate = false) {
   if (files.length > 0) cardFilesMap[cardId] = files;
 
   const attachmentBtn = files.length > 0
@@ -153,6 +173,7 @@ function addCardToList(title, description, cardOwnerId, ownerName, cardId, files
        </button>`
     : '';
 
+  const pill = (cardOwnerId == me && !isPrivate) ? '<span class="public-pill">Family</span>' : '';
   const section_elem = document.createElement('section');
   let innerHtml;
 
@@ -160,7 +181,10 @@ function addCardToList(title, description, cardOwnerId, ownerName, cardId, files
     innerHtml = `
       <section class="card" id="${cardId}">
         <div class="card-top">
-          <h2>${title}</h2>
+          <div class="card-top-left">
+            ${pill}
+            <h2>${title}</h2>
+          </div>
           <button class="dots-button">⋯</button>
           <div class="dots-menu hidden">
             <button class="edit-btn">Edit</button>
@@ -204,13 +228,13 @@ socket.on('data-for-person', (events, tasks, cards, cardFiles) => {
   if (events.length > 0) {
     sortedEvents = sortEventsForPerson(events);
     sortedEvents.forEach((event) => {
-      addEventToList(event.title, event.id, event.time);
+      addEventToList(event.title, event.id, event.time, event.is_private);
     });
   }
 
   if (tasks.length > 0) {
     tasks.forEach((task) => {
-      addTaskToList(task.title, task.id, task.complete);
+      addTaskToList(task.title, task.id, task.complete, task.is_private);
     });
   }
 
@@ -223,7 +247,7 @@ socket.on('data-for-person', (events, tasks, cards, cardFiles) => {
       });
     }
     cards.forEach((card) => {
-      addCardToList(card.title, card.description, card.user_id, card.owner?.display_name, card.id, filesForCard[card.id] || []);
+      addCardToList(card.title, card.description, card.user_id, card.owner?.display_name, card.id, filesForCard[card.id] || [], card.is_private);
     });
   }
 });

@@ -390,3 +390,14 @@ body.dark-mode .push-miss-close {
 body.dark-mode .push-miss-close:hover {
   color: #ccc;
 }
+
+
+
+
+/* Phone view: let the ping panel fill the screen instead of the 80% width. */
+@media (max-width: 600px) {
+  .ping {
+    width: auto;
+    margin: 30px 0 0;
+  }
+}

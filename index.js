@@ -332,9 +332,9 @@ io.on("connection", function (socket) {
       console.error(error);
     } else {
       if (isPrivate) {
-        socket.emit('update-cards', title, description, socket.userId, socket.displayName, data[0].id, true);
+        socket.emit('update-cards', title, description, socket.userId, socket.displayName, data[0].id, true, !!deleteAtEndOfDay);
       } else {
-        io.to(socket.familyId).emit('update-cards', title, description, socket.userId, socket.displayName, data[0].id, false);
+        io.to(socket.familyId).emit('update-cards', title, description, socket.userId, socket.displayName, data[0].id, false, !!deleteAtEndOfDay);
       }
       socket.emit('card-created', data[0].id);
     }
@@ -598,10 +598,10 @@ io.on("connection", function (socket) {
   });
 
 
-  socket.on('edit-card', async (cardId, title, description) => {
+  socket.on('edit-card', async (cardId, title, description, isPrivate, deleteAtDayEnd) => {
     const { data, error } = await socket.userSupabase
       .from('cards')
-      .update({ title: title, description: description })
+      .update({ title, description, is_private: !!isPrivate, delete_at_day_end: !!deleteAtDayEnd })
       .eq('id', cardId)
       .select()
 
@@ -609,7 +609,7 @@ io.on("connection", function (socket) {
       if (error) console.error(error);
       return; // RLS blocked (not owner) or not found
     }
-    socket.to(socket.familyId).emit('card-edit-complete', cardId, title, description, socket.displayName);
+    socket.to(socket.familyId).emit('card-edit-complete', cardId, title, description, socket.displayName, !!isPrivate, !!deleteAtDayEnd);
   });
 
 

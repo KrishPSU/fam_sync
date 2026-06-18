@@ -90,7 +90,7 @@ document.getElementById('signout-btn').addEventListener('click', async () => {
 });
 
 function setPrivacyTogglesVisible(visible) {
-  ['event-privacy-row', 'task-privacy-row', 'card-privacy-row'].forEach(id => {
+  ['event-privacy-row', 'task-privacy-row', 'card-privacy-row', 'edit-privacy-row'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('hidden', !visible);
   });
@@ -155,7 +155,7 @@ function addTaskToList(task, task_id, isComplete, isPrivate) {
 }
 
 
-function addCardToList(title, description, cardOwnerId, ownerName, cardId, files = [], isPrivate = false, insertAtTop = false) {
+function addCardToList(title, description, cardOwnerId, ownerName, cardId, files = [], isPrivate = false, deleteAtDayEnd = false, insertAtTop = false) {
   if (files.length > 0) cardFilesMap[cardId] = files;
 
   const attachmentBtn = files.length > 0
@@ -171,7 +171,7 @@ function addCardToList(title, description, cardOwnerId, ownerName, cardId, files
 
   if (cardOwnerId == me) {
     innerHtml = `
-      <section class="card" id="${cardId}">
+      <section class="card" id="${cardId}" data-is-private="${isPrivate}" data-delete-at-day-end="${deleteAtDayEnd}">
         <div class="card-top">
           <div class="card-top-left">
             ${pill}
@@ -245,7 +245,7 @@ socket.on('data-for-person', (events, tasks, cards, cardFiles) => {
       });
     }
     cards.forEach((card) => {
-      addCardToList(card.title, card.description, card.user_id, card.owner?.display_name, card.id, filesForCard[card.id] || [], card.is_private);
+      addCardToList(card.title, card.description, card.user_id, card.owner?.display_name, card.id, filesForCard[card.id] || [], card.is_private, card.delete_at_day_end);
     });
   }
 });

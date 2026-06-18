@@ -19,11 +19,12 @@ document.addEventListener('click', function (e) {
   if (e.target.classList.contains('edit-btn')) {
     const card = e.target.closest('.card');
     console.log("Editing card:", card);
-    // TODO: Open edit modal or inline edit
     currentCardBeingEditedId = card.id;
     let cardTitleElem = card.querySelector('.card-top h2');
     let cardContentElem = card.querySelector('.card-content p');
-    openEditCardModal(cardTitleElem.innerText, cardContentElem.innerText);
+    const isPrivate = card.dataset.isPrivate === 'true';
+    const deleteAtDayEnd = card.dataset.deleteAtDayEnd === 'true';
+    openEditCardModal(cardTitleElem.innerText, cardContentElem.innerText, isPrivate, deleteAtDayEnd);
   }
 
   // Handle Delete
@@ -45,18 +46,35 @@ document.querySelectorAll('.dots-menu').forEach(menu => {
 
 
 
-function editCard(cardId, title, description) {
+function editCard(cardId, title, description, isPrivate, deleteAtDayEnd) {
   let card = document.getElementById(cardId);
   let cardTitleElem = card.querySelector('.card-top h2');
   let cardContentElem = card.querySelector('.card-content p');
 
   cardTitleElem.innerText = title;
   cardContentElem.innerText = description;
+  card.dataset.isPrivate = isPrivate;
+  card.dataset.deleteAtDayEnd = deleteAtDayEnd;
+
+  const topLeft = card.querySelector('.card-top-left');
+  if (topLeft) {
+    let existingPill = topLeft.querySelector('.public-pill');
+    if (!isPrivate) {
+      if (!existingPill) {
+        const pill = document.createElement('span');
+        pill.className = 'public-pill';
+        pill.textContent = 'Family';
+        topLeft.insertBefore(pill, topLeft.firstChild);
+      }
+    } else {
+      if (existingPill) existingPill.remove();
+    }
+  }
 }
 
 
-socket.on('update-cards', (title, description, ownerId, ownerName, cardId, isPrivate) => {
-  addCardToList(title, description, ownerId, ownerName, cardId, [], isPrivate, true);
+socket.on('update-cards', (title, description, ownerId, ownerName, cardId, isPrivate, deleteAtDayEnd) => {
+  addCardToList(title, description, ownerId, ownerName, cardId, [], isPrivate, deleteAtDayEnd, true);
 });
 
 
@@ -65,11 +83,14 @@ socket.on('card-deletion', (cardId) => {
 });
 
 
-socket.on('card-edit-complete', (cardId, title, description, ownerName) => {
+socket.on('card-edit-complete', (cardId, title, description, ownerName, isPrivate, deleteAtDayEnd) => {
   const card = document.getElementById(cardId);
+  if (!card) return;
   const header = card.querySelector('h2');
   const content = card.querySelector('p');
 
   header.innerText = `${title} - ${ownerName || ''}`;
   content.innerHTML = description;
+  if (isPrivate !== undefined) card.dataset.isPrivate = isPrivate;
+  if (deleteAtDayEnd !== undefined) card.dataset.deleteAtDayEnd = deleteAtDayEnd;
 });

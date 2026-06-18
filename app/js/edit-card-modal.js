@@ -8,9 +8,11 @@ close_edit_card_modal_button.addEventListener('click', () => {
 
 
 
-function openEditCardModal(currentTitle, currentDesc) {
+function openEditCardModal(currentTitle, currentDesc, isPrivate, deleteAtDayEnd) {
   document.getElementById('edit-title').value = currentTitle;
   document.getElementById('edit-desc').value = currentDesc;
+  document.getElementById('edit-delete-toggle').checked = !!deleteAtDayEnd;
+  document.getElementById('edit-privacy-toggle').checked = !!isPrivate;
   document.getElementById('editCardModal').classList.remove('hidden');
 }
 
@@ -24,10 +26,11 @@ edit_card_form.addEventListener('submit', function(e) {
   const data = Object.fromEntries(new FormData(this));
   let title = data.title;
   let description = document.getElementById('edit-desc').value;
+  const isPrivate = document.getElementById('edit-privacy-toggle').checked;
+  const deleteAtDayEnd = document.getElementById('edit-delete-toggle').checked;
 
-  console.log(`Card edited:\n${title} | \n${description}`);
-  editCard(currentCardBeingEditedId, title, description);
-  socket.emit('edit-card', currentCardBeingEditedId, title, description);
+  editCard(currentCardBeingEditedId, title, description, isPrivate, deleteAtDayEnd);
+  socket.emit('edit-card', currentCardBeingEditedId, title, description, isPrivate, deleteAtDayEnd);
   close_edit_card_modal();
   this.reset();
 });

@@ -524,6 +524,24 @@
           <textarea name="description" id="edit-desc" rows="4" placeholder="Add details..." required></textarea>
         </label>
 
+        <div class="delete-end-toggle">
+          <span class="label">Only I can delete</span>
+          <label class="switch">
+            <input type="checkbox" id="edit-delete-toggle">
+            <span class="slider"></span>
+          </label>
+          <span class="label">Auto delete at 12 AM</span>
+        </div>
+
+        <div class="privacy-toggle-row hidden" id="edit-privacy-row">
+          <span class="label">Family can see</span>
+          <label class="switch">
+            <input type="checkbox" id="edit-privacy-toggle">
+            <span class="slider"></span>
+          </label>
+          <span class="label">Only me</span>
+        </div>
+
         <div class="modal-buttons">
           <button type="submit" id="done-editing-card" class="submit-btn">Save</button>
           <button type="button" id="close-edit-card-modal-btn" class="cancel-btn">Cancel</button>

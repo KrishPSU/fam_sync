@@ -15,6 +15,9 @@ const { createClient } = require('@supabase/supabase-js')
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
+const { registerAiHandlers } = require('./ai');
+const { indexCardFile } = require('./file-indexer');
+
 // Verify a Supabase JWT and return the auth user (or null). Uses the admin
 // client so the signature is validated server-side without anon rate limits.
 async function verifyToken(token) {
@@ -119,7 +122,7 @@ app.post('/api/upload-card-file', upload.single('file'), async (req, res) => {
     .from('card-attachments')
     .getPublicUrl(filePath);
 
-  const { error: dbError } = await supabaseAdmin
+  const { data: fileRow, error: dbError } = await supabaseAdmin
     .from('card_files')
     .insert({
       card_id: cardId,
@@ -128,12 +131,20 @@ app.post('/api/upload-card-file', upload.single('file'), async (req, res) => {
       file_url: urlData.publicUrl,
       uploader_id: user.id,
       family_id: card.family_id
-    });
+    })
+    .select()
+    .single();
 
   if (dbError) {
     console.error('DB error:', dbError);
     return res.status(500).json({ error: 'Failed to save file record' });
   }
+
+  // Index the file's text for the AI assistant in the background — don't block
+  // (or fail) the upload response on extraction.
+  indexCardFile(supabaseAdmin, fileRow).catch(err =>
+    console.error('[ai-index] background indexing error:', err && err.message)
+  );
 
   res.json({ success: true, url: urlData.publicUrl, fileName: file.originalname });
 });
@@ -246,6 +257,9 @@ app.get('/api/cleanup', async (req, res) => {
 io.on("connection", function (socket) {
 
   console.log("New socket connection!");
+
+  // Read-only AI assistant events (ai:ask → ai:answer / ai:error).
+  registerAiHandlers(io, socket);
 
   // A private room per user, so a ping can be pushed to that specific person's
   // open tabs in real time (e.g. the "you missed a ping" in-app nudge).

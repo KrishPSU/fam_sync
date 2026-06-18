@@ -141,10 +141,9 @@ app.post('/api/upload-card-file', upload.single('file'), async (req, res) => {
   }
 
   // Index the file's text for the AI assistant in the background — don't block
-  // (or fail) the upload response on extraction.
-  indexCardFile(supabaseAdmin, fileRow).catch(err =>
-    console.error('[ai-index] background indexing error:', err && err.message)
-  );
+  // (or fail) the upload response on extraction. Errors are recorded on the
+  // document row by the indexer itself.
+  indexCardFile(supabaseAdmin, fileRow).catch(() => {});
 
   res.json({ success: true, url: urlData.publicUrl, fileName: file.originalname });
 });

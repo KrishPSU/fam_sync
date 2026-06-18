@@ -51,7 +51,7 @@ async function indexCardFile(supabaseAdmin, cardFile) {
     )
     .select()
     .single();
-  if (docErr || !doc) { console.error('[ai-index] document upsert failed:', docErr && docErr.message); return; }
+  if (docErr || !doc) return;
 
   // Clear any prior chunks so a re-index doesn't duplicate content.
   await supabaseAdmin.from('ai_file_chunks').delete().eq('document_id', doc.id);
@@ -80,7 +80,7 @@ async function indexCardFile(supabaseAdmin, cardFile) {
     }
     await setStatus(supabaseAdmin, doc.id, 'done');
   } catch (err) {
-    console.error('[ai-index] extraction failed for', cardFile.file_name, '-', err.message);
+    // Failure is recorded on the document row (status + error), not the console.
     await setStatus(supabaseAdmin, doc.id, 'error', err.message);
   }
 }

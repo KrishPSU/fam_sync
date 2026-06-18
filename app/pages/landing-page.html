@@ -7,9 +7,8 @@
 
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://api.weather.gov; img-src 'self' data: https://img.icons8.com;">
 
-
   <link rel="stylesheet" href="../css/landing-page.css">
-
+  <script defer src="../js/landing-page.js"></script>
 </head>
 <body>
   <div class="landing-container">
@@ -18,6 +17,7 @@
       <p class="subtitle">Effortlessly sync, organize, and share your family moments.</p>
       <a href="/signin" class="cta-btn">Get Started</a>
     </header>
+
     <section class="features">
       <div class="feature">
         <img src="https://img.icons8.com/ios-filled/50/4d9fff/paper-plane.png" alt="Ping Icon">
@@ -34,6 +34,97 @@
         <h2>Live Sync</h2>
         <p>Updates happen instantly across all devices. Add a task on your phone, see it everywhere in seconds.</p>
       </div>
+    </section>
+
+    <section class="homescreen-section">
+      <h2 class="homescreen-title">Add to Home Screen</h2>
+      <p class="homescreen-subtitle">Install FamSync for instant access—no app store needed.</p>
+
+      <div class="platform-selector">
+        <select id="platformSelect">
+          <option value="">Choose your device...</option>
+          <option value="iphone">iPhone</option>
+          <option value="android">Android</option>
+        </select>
+      </div>
+
+      <!-- iPhone Steps -->
+      <div id="steps-iphone" class="platform-steps hidden">
+
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <p>Open this page in <strong>Safari</strong>
+              <svg class="inline-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <p>Tap <strong>Share</strong>
+              <svg class="inline-icon" width="12" height="15" viewBox="0 0 13 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6.5" y1="10" x2="6.5" y2="1"/><polyline points="3,4 6.5,1 10,4"/><path d="M1 8v6a1 1 0 001 1h9a1 1 0 001-1V8"/></svg>
+              at the bottom of your screen.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <p>Scroll down and tap <strong>Add to Home Screen</strong>
+              <svg class="inline-icon" width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6.5" y1="1" x2="6.5" y2="12"/><line x1="1" y1="6.5" x2="12" y2="6.5"/></svg>.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <p>Tap <strong>Add</strong> in the top-right corner.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Android Steps -->
+      <div id="steps-android" class="platform-steps hidden">
+
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <p>Open this page in <strong>Chrome</strong>
+              <svg class="inline-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" y1="8" x2="12" y2="8"/><line x1="3.95" y1="6.06" x2="8.54" y2="14"/><line x1="10.88" y1="21.94" x2="15.46" y2="14"/></svg>.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <p>Tap <strong>⋮</strong> in the top-right corner.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <p>Tap <strong>Add to Home screen</strong>
+              <svg class="inline-icon" width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6.5" y1="1" x2="6.5" y2="12"/><line x1="1" y1="6.5" x2="12" y2="6.5"/></svg>.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <p>Tap <strong>Add</strong> to confirm.</p>
+          </div>
+        </div>
+
+      </div>
+
     </section>
   </div>
 </body>

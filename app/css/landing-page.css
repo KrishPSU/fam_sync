@@ -54,6 +54,8 @@ body {
   transform: translateY(-2px) scale(1.04);
 }
 
+/* ── Feature tiles ───────────────────────────────── */
+
 .features {
   display: flex;
   flex-wrap: wrap;
@@ -96,6 +98,133 @@ body {
   font-size: 1rem;
 }
 
+/* ── Add to Home Screen section ─────────────────── */
+
+.homescreen-section {
+  background: #17171c;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  padding: 2rem 1.75rem;
+  margin-top: 2rem;
+}
+
+.homescreen-title {
+  color: #f0f0f5;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 0.4rem 0;
+}
+
+.homescreen-subtitle {
+  color: #9999aa;
+  font-size: 0.95rem;
+  text-align: center;
+  margin: 0 0 1.5rem 0;
+}
+
+/* Dropdown */
+.platform-selector {
+  position: relative;
+  max-width: 240px;
+  margin: 0 auto 1.5rem auto;
+}
+
+.platform-selector::after {
+  content: '';
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #9999aa;
+  pointer-events: none;
+}
+
+.platform-selector select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  background: #1e1e25;
+  color: #e8e8ed;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 0.65rem 2.5rem 0.65rem 1rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+.platform-selector select:focus {
+  border-color: rgba(77, 159, 255, 0.5);
+}
+
+/* Steps */
+.platform-steps {
+  margin-top: 0.5rem;
+}
+
+.hidden {
+  display: none;
+}
+
+.step {
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.step:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.step-num {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  background: #2563eb;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #fff;
+}
+
+.step-body {
+  text-align: center;
+}
+
+.step-body p {
+  margin: 0;
+  color: #d0d0de;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.step-body strong {
+  color: #f0f0f5;
+}
+
+.inline-icon {
+  display: inline;
+  vertical-align: middle;
+  margin-left: 2px;
+  color: #9999aa;
+}
+
+/* ── Responsive ──────────────────────────────────── */
+
 @media (max-width: 600px) {
   .landing-container {
     padding: 1rem 0.75rem;
@@ -109,5 +238,8 @@ body {
   .feature {
     flex: 1 1 100%;
     max-width: 100%;
+  }
+  .homescreen-section {
+    padding: 1.5rem 1rem;
   }
 }

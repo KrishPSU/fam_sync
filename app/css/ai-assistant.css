@@ -4,7 +4,7 @@
   right: 0;
   top: 0;
   width: 360px;
-  height: 100vh;
+  height: 100dvh;
   background: #fff;
   border-left: 1px solid #e0e0e0;
   display: flex;
@@ -271,5 +271,11 @@ body.dark-mode .ai-form input:focus {
   .ai-assistant-window {
     width: 100vw;
     left: 0;
+  }
+
+  body.ai-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
   }
 }

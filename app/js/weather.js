@@ -12,7 +12,7 @@ async function getNWSWeather(lat, lon) {
     // Step 3: Extract today's forecast
     const today = forecastData.properties.periods[0];
     const output = `🌦️ High of ${today.temperature}°${today.temperatureUnit}. ${today.detailedForecast}`;
-    
+
     // document.getElementById('weatherBox').textContent = simplifyForecast(output);
     document.getElementById('weatherBox').textContent = output;
   } catch (err) {
@@ -47,6 +47,25 @@ function simplifyForecast(rawText) {
 
 
 
+async function zipToLatLon(zip) {
+  const url = `https://geocoding.geo.census.gov/geocoder/locations/address?zip=${zip}&benchmark=Public_AR_Current&format=json`;
+  const res = await fetch(url);
+  const data = await res.json();
+  const matches = data?.result?.addressMatches;
+  if (!matches || matches.length === 0) throw new Error('ZIP not found');
+  const coords = matches[0].coordinates;
+  return { lat: coords.y, lon: coords.x };
+}
+
+async function loadWeatherForZip(zip) {
+  try {
+    const { lat, lon } = await zipToLatLon(zip);
+    await getNWSWeather(lat, lon);
+  } catch (err) {
+    document.getElementById('weatherBox').textContent = 'Could not load weather for that ZIP.';
+    console.error(err);
+  }
+}
 
 function getUserWeather() {
   navigator.geolocation.getCurrentPosition(
@@ -62,8 +81,15 @@ function getUserWeather() {
   );
 }
 
-
-getUserWeather();
+// Called by settings.js once user-settings arrives (deferred so we know
+// whether a saved ZIP should be used instead of prompting for geolocation).
+window.initWeather = function(zip) {
+  if (zip) {
+    loadWeatherForZip(zip);
+  } else {
+    getUserWeather();
+  }
+};
 
 
 

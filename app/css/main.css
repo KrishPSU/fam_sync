@@ -52,6 +52,8 @@ body.ai-panel-open .new-card-button {
 
 /* Header */
 header {
+  position: relative;
+  z-index: 200;
   text-align: center;
   margin-bottom: 1.5rem;
 }
@@ -73,6 +75,15 @@ header {
   vertical-align: middle;
 }
 
+.header-left {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
 .header-actions {
   position: absolute;
   right: 10px;
@@ -83,7 +94,7 @@ header {
   gap: 8px;
 }
 
-.header-actions #ai-button {
+#ai-button {
   height: 32px;
   padding: 0 12px;
   border-radius: 10px;
@@ -96,7 +107,7 @@ header {
   transition: all 0.2s ease;
 }
 
-.header-actions #ai-button:hover {
+#ai-button:hover {
   background-color: #005fd1;
 }
 
@@ -142,7 +153,7 @@ header {
   border-radius: 10px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   padding: 6px;
-  z-index: 100;
+  z-index: 500;
 }
 
 .user-dropdown button {
@@ -154,6 +165,10 @@ header {
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
+  color: #333;
+}
+
+.user-dropdown #signout-btn {
   color: #d23b3b;
 }
 
@@ -164,6 +179,14 @@ header {
 body.dark-mode .user-dropdown {
   background: #2b2f33;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .user-dropdown button {
+  color: #e3e3e3;
+}
+
+body.dark-mode .user-dropdown #signout-btn {
+  color: #ff6b6b;
 }
 
 body.dark-mode .user-dropdown button:hover {
@@ -655,7 +678,7 @@ body.dark-mode .pages-buttons button:hover {
 body.dark-mode .new-card-button,
 body.dark-mode .add-to-card-button,
 body.dark-mode .add-button,
-body.dark-mode .header-actions #ai-button {
+body.dark-mode #ai-button {
   background: #007bff;
   color: #fff;
 }

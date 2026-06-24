@@ -64,7 +64,7 @@ app.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "https://api.weather.gov", supabaseOrigin, "https://cdn.jsdelivr.net"],
+      connectSrc: ["'self'", "https://api.weather.gov", "https://geocoding.geo.census.gov", supabaseOrigin, "https://cdn.jsdelivr.net"],
       imgSrc: ["'self'", "data:", "https://img.icons8.com", supabaseOrigin, "https://*.googleusercontent.com"],
       scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
       styleSrc: ["'self'", "'unsafe-inline'"],
@@ -197,7 +197,7 @@ io.use(async (socket, next) => {
 
   const { data: profile } = await supabaseAdmin
     .from('profiles')
-    .select('family_id, display_name')
+    .select('family_id, display_name, email, avatar_url, default_is_private, default_delete_at_day_end, default_landing_tab, weather_zip')
     .eq('id', user.id)
     .single();
 
@@ -205,6 +205,14 @@ io.use(async (socket, next) => {
   socket.displayName = (profile && profile.display_name) || user.user_metadata?.full_name || user.email;
   socket.familyId = (profile && profile.family_id) || null;
   socket.userSupabase = scopedClient(token);
+  socket.userSettings = {
+    email: (profile && profile.email) || user.email || '',
+    avatar_url: (profile && profile.avatar_url) || user.user_metadata?.avatar_url || '',
+    default_is_private: !!(profile && profile.default_is_private),
+    default_delete_at_day_end: profile ? !!profile.default_delete_at_day_end : true,
+    default_landing_tab: (profile && profile.default_landing_tab) || 'today',
+    weather_zip: (profile && profile.weather_zip) || null,
+  };
   next();
 });
 
@@ -273,6 +281,9 @@ io.on("connection", function (socket) {
     // client so it can show a friendly "ask to be added" banner.
     socket.emit('no-family');
   }
+
+  // Send persisted user preferences to the client on every connect.
+  socket.emit('user-settings', socket.userSettings);
 
   // On (re)connect, surface any direct pings that never reached this user as a
   // push notification and that they haven't dismissed yet. Drives the in-app
@@ -900,6 +911,36 @@ io.on("connection", function (socket) {
     } else {
       socket.emit('messages-retrieved', data);
     }
+  });
+
+
+
+  // ---- User Settings ----
+
+  const SETTINGS_ALLOWED = ['default_is_private', 'default_delete_at_day_end', 'default_landing_tab', 'weather_zip'];
+
+  socket.on('save-user-settings', async (patch) => {
+    if (!patch || typeof patch !== 'object') return;
+    const safe = {};
+    SETTINGS_ALLOWED.forEach(k => { if (k in patch) safe[k] = patch[k]; });
+    if (!Object.keys(safe).length) return;
+    const { error } = await supabaseAdmin
+      .from('profiles')
+      .update(safe)
+      .eq('id', socket.userId);
+    if (error) { console.error(error); return; }
+    Object.assign(socket.userSettings, safe);
+  });
+
+  socket.on('delete-push-subscription', async (endpoint) => {
+    if (!endpoint) return;
+    const { error } = await supabaseAdmin
+      .from('push_subscriptions')
+      .delete()
+      .eq('endpoint', endpoint)
+      .eq('user_id', socket.userId);
+    if (error) console.error(error);
+    else socket.emit('push-subscription-deleted');
   });
 
 

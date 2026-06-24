@@ -10,8 +10,13 @@ const aiWindow = document.querySelector('.ai-assistant-window');
 const closeAiBtn = document.getElementById('close-ai-btn');
 
 ai_btn.addEventListener('click', () => {
-  aiWindow.classList.remove('hidden');
-  if (window.innerWidth <= 600) document.body.classList.add('ai-open');
+  if (aiWindow.classList.contains('hidden')) {
+    aiWindow.classList.remove('hidden');
+    if (window.innerWidth <= 600) document.body.classList.add('ai-open');
+  } else {
+    aiWindow.classList.add('hidden');
+    document.body.classList.remove('ai-open');
+  }
 });
 
 closeAiBtn.addEventListener('click', () => {

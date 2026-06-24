@@ -34,6 +34,7 @@
   <script defer src="../js/ping-page-display.js"></script>
   <script defer src="../js/files.js"></script>
   <script defer src="../js/ai.js"></script>
+  <script defer src="../js/settings.js"></script>
 
 
   <link rel="stylesheet" href="../css/main.css">
@@ -44,6 +45,7 @@
   <link rel="stylesheet" href="../css/message.css">
   <link rel="stylesheet" href="../css/ai-assistant.css">
   <link rel="stylesheet" href="../css/files.css">
+  <link rel="stylesheet" href="../css/settings.css">
 
 </head>
 <body>
@@ -67,7 +69,7 @@
 
     <header>
       <div class="header-container">
-        <label class="dark-mode-toggle" title="Toggle dark mode">
+        <label class="dark-mode-toggle" title="Toggle dark mode" style="display:none">
           <span class="toggle-icon sun" aria-label="Light mode">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f7c948" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
           </span>
@@ -77,15 +79,18 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b3c0e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
           </span>
         </label>
+        <div class="header-left">
+          <button id="ai-button">AI</button>
+        </div>
         <h1>FamSync</h1>
         <div class="header-actions">
-          <button id="ai-button">AI</button>
           <div class="user-menu">
             <button id="user-avatar-btn" class="user-avatar-btn" title="Account">
               <img id="user-avatar-img" class="user-avatar-img hidden" alt="Account" />
               <span id="user-avatar-fallback" class="user-avatar-fallback hidden"></span>
             </button>
             <div id="user-dropdown" class="user-dropdown hidden">
+              <button id="open-settings-btn">Settings</button>
               <button id="signout-btn">Sign out</button>
             </div>
           </div>
@@ -638,7 +643,109 @@
   </div>
 
 
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-content settings-modal-content">
+      <div class="settings-modal-header">
+        <h2>Settings</h2>
+        <button id="close-settings-modal-btn" class="cancel-btn-x">✕</button>
+      </div>
 
+      <!-- Account -->
+      <section class="settings-section">
+        <h3 class="settings-section-title">Account</h3>
+        <div class="settings-account-row">
+          <img id="settings-avatar-img" class="settings-avatar hidden" alt="" />
+          <span id="settings-avatar-fallback" class="settings-avatar-fallback hidden"></span>
+          <div class="settings-account-info">
+            <p id="settings-display-name" class="settings-name"></p>
+            <p id="settings-email" class="settings-email"></p>
+          </div>
+        </div>
+        <button id="settings-signout-btn" class="settings-signout-btn">Sign out</button>
+      </section>
+
+      <hr class="settings-divider" />
+
+      <!-- Notifications -->
+      <section class="settings-section">
+        <h3 class="settings-section-title">Notifications</h3>
+        <div class="settings-row">
+          <div class="settings-row-label">
+            <span>Push notifications</span>
+            <span class="settings-row-hint">Receive pings even when the app is closed</span>
+          </div>
+          <label class="switch settings-switch">
+            <input type="checkbox" id="settings-push-toggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <p id="settings-push-hint" class="settings-push-hint hidden"></p>
+      </section>
+
+      <hr class="settings-divider" />
+
+      <!-- New Item Defaults -->
+      <section class="settings-section">
+        <h3 class="settings-section-title">New Item Defaults</h3>
+        <div class="settings-row">
+          <div class="settings-row-label">
+            <span>Private by default</span>
+            <span class="settings-row-hint">New events, tasks, and cards are visible only to you</span>
+          </div>
+          <label class="switch settings-switch">
+            <input type="checkbox" id="settings-default-private" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-label">
+            <span>Auto-delete at midnight</span>
+            <span class="settings-row-hint">New items are deleted at 12 AM by default</span>
+          </div>
+          <label class="switch settings-switch">
+            <input type="checkbox" id="settings-default-delete" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </section>
+
+      <hr class="settings-divider" />
+
+      <!-- App Preferences -->
+      <section class="settings-section">
+        <h3 class="settings-section-title">App Preferences</h3>
+        <div class="settings-row">
+          <div class="settings-row-label">
+            <span>Dark mode</span>
+          </div>
+          <label class="switch settings-switch">
+            <input type="checkbox" id="settings-dark-mode" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-field">
+          <label for="settings-landing-tab">Default landing tab</label>
+          <select id="settings-landing-tab" class="settings-select">
+            <option value="today">Today</option>
+            <option value="ping">Ping</option>
+            <option value="family">Family</option>
+          </select>
+        </div>
+
+        <div class="settings-field">
+          <label for="settings-weather-zip">Weather location (US ZIP code)</label>
+          <div class="settings-zip-row">
+            <input type="text" id="settings-weather-zip" class="settings-input"
+                   placeholder="e.g. 10001" maxlength="5" inputmode="numeric" autocomplete="off" />
+            <button type="button" id="settings-zip-save-btn" class="attach-btn">Save</button>
+          </div>
+          <span class="settings-row-hint">Leave blank to use device location</span>
+        </div>
+      </section>
+    </div>
+  </div>
 
 
 </body>

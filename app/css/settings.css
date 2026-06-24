@@ -1,0 +1,230 @@
+/* Settings modal — scrollable, taller than a standard modal */
+.settings-modal-content {
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 1.25rem;
+  width: 80%;
+  max-width: 600px;
+}
+
+@media (max-width: 600px) {
+  .settings-modal-content {
+    width: 95%;
+  }
+}
+
+.settings-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.settings-modal-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  text-align: left;
+}
+
+/* Section grouping */
+.settings-section {
+  padding: 0.75rem 0;
+}
+
+.settings-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #999;
+  margin: 0 0 0.75rem;
+}
+
+.settings-divider {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 0;
+}
+
+/* Row: label on the left, toggle on the right */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0;
+}
+
+.settings-row-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-row-hint {
+  font-size: 0.78rem;
+  color: #999;
+}
+
+/* Neutralise the margin-top that .switch inherits from modal.css */
+.settings-switch {
+  margin-top: 0 !important;
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+/* Field: label above, input below */
+.settings-field {
+  margin: 0.75rem 0;
+}
+
+.settings-field > label {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+  margin-top: 0;
+}
+
+.settings-select,
+.settings-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  background: white;
+  color: inherit;
+}
+
+.settings-zip-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.settings-zip-row .settings-input {
+  flex: 1;
+}
+
+/* Account section */
+.settings-account-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.settings-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.settings-avatar-fallback {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #007bff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.settings-avatar-fallback.hidden {
+  display: none;
+}
+
+.settings-account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.settings-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-email {
+  font-size: 0.82rem;
+  color: #888;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-signout-btn {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #d23b3b;
+  color: #d23b3b;
+  background: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.settings-signout-btn:hover {
+  background: #d23b3b;
+  color: #fff;
+}
+
+.settings-push-hint {
+  font-size: 0.82rem;
+  color: #d23b3b;
+  margin: 4px 0 0;
+}
+
+/* ── Dark mode ── */
+body.dark-mode .settings-divider {
+  border-top-color: #333;
+}
+
+body.dark-mode .settings-section-title {
+  color: #666;
+}
+
+body.dark-mode .settings-row-hint {
+  color: #666;
+}
+
+body.dark-mode .settings-select,
+body.dark-mode .settings-input {
+  background: #23272a;
+  color: #e3e3e3;
+  border-color: #444;
+}
+
+body.dark-mode .settings-email {
+  color: #777;
+}
+
+body.dark-mode .settings-avatar-fallback {
+  background: #1a6cc5;
+}
+
+body.dark-mode .settings-signout-btn {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+}
+
+body.dark-mode .settings-signout-btn:hover {
+  background: #ff6b6b;
+  color: #fff;
+}

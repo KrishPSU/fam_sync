@@ -256,23 +256,95 @@ body.dark-mode .family-or::after {
 
 /* Inline input + button rows for Create / Join forms */
 #createFamilyForm,
-#joinFamilyForm {
+#joinFamilyForm,
+.add-family-form {
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
 }
 
 #createFamilyForm label,
-#joinFamilyForm label {
+#joinFamilyForm label,
+.add-family-form label {
   flex: 1;
   margin-bottom: 0;
 }
 
 #createFamilyForm .submit-btn,
-#joinFamilyForm .submit-btn {
+#joinFamilyForm .submit-btn,
+.add-family-form .submit-btn {
   flex: none;
   width: auto;
   padding: 0.55rem 1rem;
   font-size: 0.95rem;
   align-self: flex-end;
+}
+
+/* ---- Family switcher dropdown ---- */
+.family-switcher {
+  margin: 0.25rem 0 1rem;
+}
+
+.family-switcher label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+
+.modal-content .family-switch-select {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  margin-top: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 1px solid #ccd3e0;
+  border-radius: 10px;
+  background-color: #f0f4ff;
+  color: #1a3e8c;
+  cursor: pointer;
+}
+
+.modal-content .family-switch-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+body.dark-mode .modal-content .family-switch-select {
+  background-color: #2b3340;
+  color: #90c4ff;
+  border-color: #3a4250;
+}
+
+/* ---- "Join or create another family" toggle button ---- */
+.add-family-toggle-btn {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0;
+  margin-bottom: 1rem;
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #007bff;
+  cursor: pointer;
+  text-align: center;
+}
+
+.add-family-toggle-btn:hover {
+  text-decoration: underline;
+}
+
+body.dark-mode .add-family-toggle-btn {
+  color: #90c4ff;
+}
+
+/* ---- Add-family form section ---- */
+#add-family-section {
+  margin-top: 0.5rem;
+}
+
+#add-family-section .family-or {
+  margin: 0.75rem 0;
 }

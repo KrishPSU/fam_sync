@@ -10,12 +10,19 @@ const create_family_form = document.getElementById('createFamilyForm');
 const join_family_form = document.getElementById('joinFamilyForm');
 const family_modal_error = document.getElementById('family-modal-error');
 const leave_family_btn = document.getElementById('leave-family-btn');
+const family_single_line = document.getElementById('family-single-line');
+const family_switcher = document.getElementById('family-switcher');
+const family_switch_select = document.getElementById('family-switch-select');
+const add_family_toggle_btn = document.getElementById('add-family-toggle-btn');
+const family_info_section = document.getElementById('family-info-section');
+const add_family_section = document.getElementById('add-family-section');
 
 
 function openFamilyModal() {
   family_modal_error.classList.add('hidden');
   family_in_view.classList.add('hidden');
   family_out_view.classList.add('hidden');
+  showFamilyInfo(); // always reset to family-info state on open
   document.getElementById('family-modal-loader').classList.remove('hidden');
   family_modal.classList.remove('hidden');
   socket.emit('request-family-info'); // server replies family-info or no-family
@@ -46,6 +53,55 @@ function renderInFamily(info) {
     li.textContent = m.display_name + (m.id === me ? ' (you)' : '');
     family_members_list.appendChild(li);
   });
+  renderFamilySwitcher(info);
+}
+
+// Show a dropdown to switch families only when the user belongs to more than
+// one; otherwise just show the plain "You're in <family>" line.
+function renderFamilySwitcher(info) {
+  const families = info.families || [];
+  if (families.length > 1) {
+    family_single_line.classList.add('hidden');
+    family_switcher.classList.remove('hidden');
+    // Build options with the DOM API so family names (user input) can't inject markup.
+    family_switch_select.innerHTML = '';
+    families.forEach((f) => family_switch_select.add(new Option(f.name, f.id)));
+    family_switch_select.value = info.active_family_id || info.id;
+  } else {
+    family_switcher.classList.add('hidden');
+    family_single_line.classList.remove('hidden');
+  }
+}
+
+function showFamilyInfo() {
+  family_info_section.classList.remove('hidden');
+  add_family_section.classList.add('hidden');
+  add_family_toggle_btn.textContent = 'Join or create another family';
+  document.getElementById('add-join-family-code').value = '';
+  document.getElementById('add-create-family-name').value = '';
+  family_modal_error.classList.add('hidden');
+}
+
+function showAddFamily() {
+  family_info_section.classList.add('hidden');
+  add_family_section.classList.remove('hidden');
+  add_family_toggle_btn.textContent = '← Back to family';
+}
+
+add_family_toggle_btn.addEventListener('click', () => {
+  if (add_family_section.classList.contains('hidden')) {
+    showAddFamily();
+  } else {
+    showFamilyInfo();
+  }
+});
+
+// Refetch every view's data so it reflects the newly active family.
+function refreshAllForActiveFamily() {
+  requestTodayData();
+  socket.emit('request-family-events-and-tasks');
+  socket.emit('request-family-members');
+  socket.emit('get-messages');
 }
 
 function renderNoFamily() {
@@ -63,9 +119,24 @@ socket.on('family-joined', (info) => {
   if (banner) banner.style.display = 'none';
   renderInFamily(info);
   setPrivacyTogglesVisible(true);
-  // Now that we belong to a family, (re)load the user + family data.
-  requestTodayData();
-  socket.emit('request-family-events-and-tasks');
+  showFamilyInfo(); // return to family info view after joining
+  document.getElementById('create-family-name').value = '';
+  document.getElementById('join-family-code').value = '';
+  refreshAllForActiveFamily();
+});
+
+// Active family changed (via the dropdown, or auto-fallback after leaving one).
+socket.on('family-switched', (info) => {
+  const banner = document.getElementById('no-family-banner');
+  if (banner) banner.style.display = 'none';
+  renderInFamily(info);
+  setPrivacyTogglesVisible(true);
+  refreshAllForActiveFamily();
+});
+
+family_switch_select.addEventListener('change', () => {
+  family_modal_error.classList.add('hidden');
+  socket.emit('switch-family', family_switch_select.value);
 });
 
 socket.on('family-error', (msg) => {
@@ -78,9 +149,11 @@ socket.on('left-family', () => {
   if (banner) banner.style.display = 'block';
   renderNoFamily();
   setPrivacyTogglesVisible(false);
-  // Today + family views are now empty (no family) — refresh them.
+  // Today + family views are now empty (no family) — refresh them. Also clear
+  // the ping recipient dropdown (server returns [] when you're family-less).
   requestTodayData();
   socket.emit('request-family-events-and-tasks');
+  socket.emit('request-family-members');
 });
 
 
@@ -100,6 +173,20 @@ join_family_form.addEventListener('submit', (e) => {
   e.preventDefault();
   family_modal_error.classList.add('hidden');
   socket.emit('join-family', document.getElementById('join-family-code').value);
+});
+
+
+// "Join or create another family" forms, shown while already in a family.
+document.getElementById('addJoinFamilyForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  family_modal_error.classList.add('hidden');
+  socket.emit('join-family', document.getElementById('add-join-family-code').value);
+});
+
+document.getElementById('addCreateFamilyForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  family_modal_error.classList.add('hidden');
+  socket.emit('create-family', document.getElementById('add-create-family-name').value);
 });
 
 

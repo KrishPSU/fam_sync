@@ -560,24 +560,56 @@
         <div class="loader"></div>
       </div>
 
+      <p id="family-modal-error" class="family-error hidden"></p>
+
       <!-- When you're in a family -->
       <div id="family-in-view" class="hidden">
-        <p class="family-modal-line">You're in <strong id="family-name-display"></strong></p>
 
-        <label>Invite code</label>
-        <div class="invite-code-row">
-          <span id="invite-code-display" class="invite-code"></span>
-          <button type="button" id="copy-code-btn" class="attach-btn">Copy</button>
+        <button type="button" id="add-family-toggle-btn" class="add-family-toggle-btn">Join or create another family</button>
+
+        <!-- Default: current family info -->
+        <div id="family-info-section">
+          <p class="family-modal-line" id="family-single-line">You're in <strong id="family-name-display"></strong></p>
+
+          <!-- Shown only when the user belongs to more than one family. -->
+          <div id="family-switcher" class="family-switcher hidden">
+            <label for="family-switch-select">Active family</label>
+            <select id="family-switch-select" class="family-switch-select"></select>
+          </div>
+
+          <label>Invite code</label>
+          <div class="invite-code-row">
+            <span id="invite-code-display" class="invite-code"></span>
+            <button type="button" id="copy-code-btn" class="attach-btn">Copy</button>
+          </div>
+          <p class="invite-hint">Share this code so family can join.</p>
+
+          <p class="family-modal-line">Members</p>
+          <ul id="family-members-list" class="family-members-list"></ul>
+
+          <div class="modal-buttons">
+            <button type="button" id="leave-family-btn" class="leave-family-btn">Leave family</button>
+            <button type="button" id="close-family-modal-btn" class="cancel-btn">Close</button>
+          </div>
         </div>
-        <p class="invite-hint">Share this code so family can join.</p>
 
-        <p class="family-modal-line">Members</p>
-        <ul id="family-members-list" class="family-members-list"></ul>
-
-        <div class="modal-buttons">
-          <button type="button" id="leave-family-btn" class="leave-family-btn">Leave family</button>
-          <button type="button" id="close-family-modal-btn" class="cancel-btn">Close</button>
+        <!-- Toggled: join or create another family -->
+        <div id="add-family-section" class="hidden">
+          <form id="addJoinFamilyForm" class="add-family-form">
+            <label>Join with a code
+              <input type="text" id="add-join-family-code" placeholder="7F3K2Q" autocomplete="off" required />
+            </label>
+            <button type="submit" class="submit-btn">Join</button>
+          </form>
+          <div class="family-or"><span>or</span></div>
+          <form id="addCreateFamilyForm" class="add-family-form">
+            <label>Create a family
+              <input type="text" id="add-create-family-name" placeholder="The Smiths" autocomplete="off" required />
+            </label>
+            <button type="submit" class="submit-btn">Create</button>
+          </form>
         </div>
+
       </div>
 
       <!-- When you're not in a family yet -->
@@ -597,8 +629,6 @@
           </label>
           <button type="submit" class="submit-btn">Join</button>
         </form>
-
-        <p id="family-modal-error" class="family-error hidden"></p>
 
         <div class="modal-buttons">
           <button type="button" id="close-family-modal-btn-2" class="cancel-btn">Close</button>

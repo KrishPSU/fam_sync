@@ -406,16 +406,33 @@ io.on("connection", function (socket) {
   }
 
 
-  // Same-family member profiles, for the family view + ping dropdown.
+  // Members of the caller's ACTIVE family, for the family view + ping dropdown.
+  // Sourced from family_members (not profiles.family_id) so members whose active
+  // family points elsewhere are still listed for this family.
   async function getFamilyMembers() {
     if (!socket.familyId) return [];
     const { data, error } = await socket.userSupabase
-      .from('profiles')
-      .select('id, display_name')
+      .from('family_members')
+      .select('profiles(id, display_name)')
       .eq('family_id', socket.familyId)
-      .order('display_name');
+      .is('left_at', null);          // exclude members who've left this family
     if (error) { console.error(error); return []; }
-    return data || [];
+    return (data || [])
+      .map((r) => r.profiles)
+      .filter(Boolean)
+      .sort((a, b) => (a.display_name || '').localeCompare(b.display_name || ''));
+  }
+
+  // Every family the caller belongs to (id + name), for the switcher dropdown.
+  async function getMyFamilies() {
+    const { data, error } = await socket.userSupabase
+      .from('family_members')
+      .select('families(id, name)')
+      .eq('user_id', socket.userId)    // only THIS user's memberships, not all co-members
+      .is('left_at', null)
+      .order('joined_at', { ascending: true });
+    if (error) { console.error(error); return []; }
+    return (data || []).map((r) => r.families).filter(Boolean);
   }
 
 
@@ -479,7 +496,14 @@ io.on("connection", function (socket) {
       .eq('id', socket.familyId)
       .single();
     if (!fam) return null;
-    return { id: fam.id, name: fam.name, invite_code: fam.invite_code, members: await getFamilyMembers() };
+    return {
+      id: fam.id,
+      name: fam.name,
+      invite_code: fam.invite_code,
+      members: await getFamilyMembers(),
+      families: await getMyFamilies(),     // all families this user can switch between
+      active_family_id: socket.familyId,
+    };
   }
 
   // 6-char code from an unambiguous alphabet (no 0/O/1/I), unique vs existing.
@@ -499,8 +523,24 @@ io.on("connection", function (socket) {
     socket.emit('family-info', await getFamilyInfo());
   });
 
+  // Point the user at `familyId` as their active family: update the profile,
+  // swap the realtime room, and update socket state. Caller must have already
+  // validated membership. Returns true on success.
+  async function setActiveFamily(familyId) {
+    const { error } = await supabaseAdmin
+      .from('profiles')
+      .update({ family_id: familyId })
+      .eq('id', socket.userId);
+    if (error) { console.error(error); return false; }
+    if (socket.familyId) socket.leave(socket.familyId);
+    socket.familyId = familyId;
+    if (familyId) socket.join(familyId);
+    // Don't carry the assistant's conversation across families.
+    socket._aiHistory = null;
+    return true;
+  }
+
   socket.on('create-family', async (name) => {
-    if (socket.familyId) { socket.emit('family-error', "You're already in a family."); return; }
     const trimmed = (name || '').trim();
     if (!trimmed) { socket.emit('family-error', 'Please enter a family name.'); return; }
 
@@ -512,19 +552,17 @@ io.on("connection", function (socket) {
       .single();
     if (error || !fam) { console.error(error); socket.emit('family-error', 'Could not create the family.'); return; }
 
-    const { error: pErr } = await supabaseAdmin
-      .from('profiles')
-      .update({ family_id: fam.id })
-      .eq('id', socket.userId);
-    if (pErr) { console.error(pErr); socket.emit('family-error', 'Could not join the new family.'); return; }
+    const { error: mErr } = await supabaseAdmin
+      .from('family_members')
+      .insert({ user_id: socket.userId, family_id: fam.id });
+    if (mErr) { console.error(mErr); socket.emit('family-error', 'Could not join the new family.'); return; }
 
-    socket.familyId = fam.id;
-    socket.join(fam.id);
+    // Newly created family becomes the active one.
+    if (!(await setActiveFamily(fam.id))) { socket.emit('family-error', 'Could not switch to the new family.'); return; }
     socket.emit('family-joined', await getFamilyInfo());
   });
 
   socket.on('join-family', async (code) => {
-    if (socket.familyId) { socket.emit('family-error', "You're already in a family."); return; }
     const c = (code || '').trim().toUpperCase();
     if (!c) { socket.emit('family-error', 'Please enter an invite code.'); return; }
 
@@ -535,31 +573,73 @@ io.on("connection", function (socket) {
       .maybeSingle();
     if (!fam) { socket.emit('family-error', 'No family found with that code.'); return; }
 
-    const { error: pErr } = await supabaseAdmin
-      .from('profiles')
-      .update({ family_id: fam.id })
-      .eq('id', socket.userId);
-    if (pErr) { console.error(pErr); socket.emit('family-error', 'Could not join that family.'); return; }
+    // Idempotent: joining a family you're already in just switches you to it.
+    // If you'd previously left, this clears left_at and reconnects your old data.
+    const { error: mErr } = await supabaseAdmin
+      .from('family_members')
+      .upsert(
+        { user_id: socket.userId, family_id: fam.id, left_at: null },
+        { onConflict: 'user_id,family_id' }
+      );
+    if (mErr) { console.error(mErr); socket.emit('family-error', 'Could not join that family.'); return; }
 
-    socket.familyId = fam.id;
-    socket.join(fam.id);
+    if (!(await setActiveFamily(fam.id))) { socket.emit('family-error', 'Could not switch to that family.'); return; }
     socket.emit('family-joined', await getFamilyInfo());
+  });
+
+  // Switch the active family to one the user already belongs to. Drives the
+  // family-tab dropdown; the client refetches all data on family-switched.
+  socket.on('switch-family', async (familyId) => {
+    if (!familyId) return;
+    if (familyId === socket.familyId) { socket.emit('family-switched', await getFamilyInfo()); return; }
+
+    const { data: membership } = await supabaseAdmin
+      .from('family_members')
+      .select('family_id')
+      .eq('user_id', socket.userId)
+      .eq('family_id', familyId)
+      .is('left_at', null)
+      .maybeSingle();
+    if (!membership) { socket.emit('family-error', "You're not a member of that family."); return; }
+
+    if (!(await setActiveFamily(familyId))) { socket.emit('family-error', 'Could not switch families.'); return; }
+    socket.emit('family-switched', await getFamilyInfo());
   });
 
   socket.on('leave-family', async () => {
     if (!socket.familyId) return;
-    const previous = socket.familyId;
+    const leaving = socket.familyId;
+
+    // Soft leave: keep the membership row but mark it left. Their data stays
+    // linked to the family (not deleted), they vanish from the family's member
+    // and message lists, and a later rejoin (same user id) clears left_at and
+    // reconnects everything.
     const { error } = await supabaseAdmin
-      .from('profiles')
-      .update({ family_id: null })
-      .eq('id', socket.userId);
+      .from('family_members')
+      .update({ left_at: new Date().toISOString() })
+      .eq('user_id', socket.userId)
+      .eq('family_id', leaving)
+      .is('left_at', null);
     if (error) { console.error(error); socket.emit('family-error', 'Could not leave the family.'); return; }
 
-    // Their existing items keep the old family_id and stay with that family;
-    // the user simply loses access (RLS) and can create/join another.
-    socket.leave(previous);
-    socket.familyId = null;
-    socket.emit('left-family');
+    // Fall back to another family they're still an active member of, if any, so
+    // they're not stranded with no active family.
+    const { data: remaining } = await supabaseAdmin
+      .from('family_members')
+      .select('family_id')
+      .eq('user_id', socket.userId)
+      .is('left_at', null)
+      .order('joined_at', { ascending: true })
+      .limit(1);
+    const next = remaining && remaining.length ? remaining[0].family_id : null;
+
+    if (!(await setActiveFamily(next))) { socket.emit('family-error', 'Could not leave the family.'); return; }
+
+    if (next) {
+      socket.emit('family-switched', await getFamilyInfo());
+    } else {
+      socket.emit('left-family');
+    }
   });
 
 
@@ -745,14 +825,22 @@ io.on("connection", function (socket) {
       return;
     }
 
-    // Direct ping — the recipient must be in the caller's family.
+    // Direct ping — the recipient must be a member of the caller's active family.
     const { data: recipient } = await supabaseAdmin
       .from('profiles')
-      .select('id, display_name, family_id')
+      .select('id, display_name')
       .eq('id', to)
       .single();
 
-    if (!recipient || recipient.family_id !== socket.familyId) {
+    const { data: membership } = await supabaseAdmin
+      .from('family_members')
+      .select('user_id')
+      .eq('user_id', to)
+      .eq('family_id', socket.familyId)
+      .is('left_at', null)
+      .maybeSingle();
+
+    if (!recipient || !membership) {
       socket.emit('ping-failed', 'that person');
       return;
     }

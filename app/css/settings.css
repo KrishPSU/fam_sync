@@ -228,3 +228,116 @@ body.dark-mode .settings-signout-btn:hover {
   background: #ff6b6b;
   color: #fff;
 }
+
+/* External Calendars */
+.ext-cal-help {
+  margin: 8px 0 12px;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.ext-cal-help summary {
+  cursor: pointer;
+  color: #1a6cc5;
+  user-select: none;
+}
+
+.ext-cal-help-list {
+  margin: 8px 0 0 16px;
+  padding: 0;
+  line-height: 1.7;
+}
+
+.ext-cal-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ext-cal-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.ext-cal-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ext-cal-item-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ext-cal-item-synced {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.ext-cal-remove-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.ext-cal-remove-btn:hover {
+  color: #e74c3c;
+}
+
+.ext-cal-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.ext-cal-add-btn {
+  align-self: flex-start;
+}
+
+/* Dark mode overrides */
+body.dark-mode .ext-cal-help {
+  color: #888;
+}
+
+body.dark-mode .ext-cal-item {
+  background: #23272a;
+}
+
+body.dark-mode .ext-cal-item-name {
+  color: #e3e3e3;
+}
+
+body.dark-mode .ext-cal-remove-btn {
+  color: #555;
+}
+
+body.dark-mode .ext-cal-remove-btn:hover {
+  color: #ff6b6b;
+}
+
+.ext-cal-success {
+  color: #2a9d4e;
+}
+
+body.dark-mode .ext-cal-success {
+  color: #4caf74;
+}

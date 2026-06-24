@@ -15,6 +15,7 @@ settingsModal.addEventListener('click', (e) => {
 function openSettingsModal() {
   document.getElementById('settings-dark-mode').checked = document.body.classList.contains('dark-mode');
   refreshPushToggle();
+  socket.emit('get-external-calendars');
   settingsModal.classList.remove('hidden');
 }
 
@@ -162,4 +163,74 @@ document.getElementById('settings-signout-btn').addEventListener('click', async 
   socket.disconnect();
   await _supabase.auth.signOut();
   window.location.href = '/signin';
+});
+
+
+// ---- External Calendars ----
+
+function formatSyncTime(isoString) {
+  if (!isoString) return 'never synced';
+  const d = new Date(isoString);
+  return `Last synced ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+function renderExternalCalendars(calendars) {
+  const list = document.getElementById('ext-cal-list');
+  list.innerHTML = '';
+  if (!calendars || calendars.length === 0) return;
+
+  calendars.forEach(cal => {
+    const li = document.createElement('li');
+    li.className = 'ext-cal-item';
+    li.innerHTML = `
+      <div class="ext-cal-item-info">
+        <span class="ext-cal-item-name">${cal.name}</span>
+        <span class="ext-cal-item-synced">${formatSyncTime(cal.last_synced_at)}</span>
+      </div>
+      <button class="ext-cal-remove-btn" data-id="${cal.id}" title="Remove calendar">✕</button>
+    `;
+    li.querySelector('.ext-cal-remove-btn').addEventListener('click', () => {
+      socket.emit('remove-external-calendar', cal.id);
+    });
+    list.appendChild(li);
+  });
+}
+
+socket.on('external-calendars-list', renderExternalCalendars);
+
+socket.on('external-calendar-added', () => {
+  document.getElementById('ext-cal-name').value = '';
+  document.getElementById('ext-cal-url').value = '';
+  const btn = document.getElementById('ext-cal-add-btn');
+  btn.disabled = false;
+  btn.textContent = 'Connect';
+  const status = document.getElementById('ext-cal-status');
+  status.textContent = 'Calendar connected!';
+  status.classList.add('ext-cal-success');
+  status.classList.remove('hidden');
+  setTimeout(() => status.classList.add('hidden'), 3000);
+});
+
+socket.on('external-calendar-error', (msg) => {
+  const errEl = document.getElementById('ext-cal-error');
+  const btn = document.getElementById('ext-cal-add-btn');
+  btn.disabled = false;
+  btn.textContent = 'Connect';
+  errEl.textContent = msg;
+  errEl.classList.remove('hidden');
+});
+
+document.getElementById('ext-cal-add-btn').addEventListener('click', () => {
+  const name = document.getElementById('ext-cal-name').value.trim();
+  const url = document.getElementById('ext-cal-url').value.trim();
+  const errEl = document.getElementById('ext-cal-error');
+  errEl.classList.add('hidden');
+
+  if (!name) { errEl.textContent = 'Please enter a calendar name.'; errEl.classList.remove('hidden'); return; }
+  if (!url)  { errEl.textContent = 'Please paste the ICS URL.'; errEl.classList.remove('hidden'); return; }
+
+  const btn = document.getElementById('ext-cal-add-btn');
+  btn.disabled = true;
+  btn.textContent = 'Connecting…';
+  socket.emit('add-external-calendar', name, url);
 });

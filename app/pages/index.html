@@ -744,6 +744,33 @@
           <span class="settings-row-hint">Leave blank to use device location</span>
         </div>
       </section>
+
+      <hr class="settings-divider" />
+
+      <!-- External Calendars -->
+      <section class="settings-section" id="ext-cal-section">
+        <h3 class="settings-section-title">External Calendars</h3>
+        <p class="settings-row-hint">Connect any calendar that provides a private ICS link — Google, Outlook, Apple, and more.</p>
+
+        <details class="ext-cal-help">
+          <summary>How to get your calendar URL</summary>
+          <ul class="ext-cal-help-list">
+            <li><strong>Google:</strong> Calendar Settings → [your calendar] → "Secret address in iCal format"</li>
+            <li><strong>Outlook:</strong> Settings → View all Outlook settings → Calendar → Shared calendars → Publish → copy ICS link</li>
+            <li><strong>Apple iCloud:</strong> Right-click calendar → Share Calendar → enable Public Calendar → copy link, change "webcal://" to "https://"</li>
+          </ul>
+        </details>
+
+        <ul id="ext-cal-list" class="ext-cal-list"></ul>
+
+        <div class="ext-cal-add-form">
+          <input type="text" id="ext-cal-name" class="settings-input" placeholder="Name (e.g. Work)" maxlength="40" autocomplete="off" />
+          <input type="url" id="ext-cal-url" class="settings-input" placeholder="Paste .ics URL" autocomplete="off" />
+          <button id="ext-cal-add-btn" class="attach-btn ext-cal-add-btn">Connect</button>
+        </div>
+        <p id="ext-cal-error" class="settings-push-hint hidden"></p>
+        <p id="ext-cal-status" class="settings-push-hint hidden"></p>
+      </section>
     </div>
   </div>
 

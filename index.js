@@ -17,6 +17,7 @@ const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABAS
 
 const { registerAiHandlers } = require('./ai');
 const { indexCardFile } = require('./file-indexer');
+const { fetchTodayEvents, syncUserCalendars } = require('./calendar-sync');
 
 // Verify a Supabase JWT and return the auth user (or null). Uses the admin
 // client so the signature is validated server-side without anon rate limits.
@@ -249,6 +250,39 @@ app.get('/api/cleanup', async (req, res) => {
     }
 
     console.log("✅ Daily cleanup succeeded");
+
+    // Sync external calendars for all users so next-day events are ready.
+    try {
+      const { data: calendars } = await supabaseAdmin
+        .from('external_calendars')
+        .select('user_id, external_calendars(id)');
+
+      const { data: allUsers } = await supabaseAdmin
+        .from('external_calendars')
+        .select('user_id, profiles!user_id(family_id)')
+        .eq('profiles.family_id', null); // fallback handled inside syncUserCalendars
+
+      // Distinct user+family pairs across all external_calendars rows
+      const { data: userRows } = await supabaseAdmin
+        .from('external_calendars')
+        .select('user_id, profiles!inner(family_id)');
+
+      if (userRows) {
+        const seen = new Set();
+        for (const row of userRows) {
+          const uid = row.user_id;
+          if (seen.has(uid)) continue;
+          seen.add(uid);
+          const fid = row.profiles?.family_id;
+          syncUserCalendars(uid, fid, supabaseAdmin).catch(err =>
+            console.error(`[calendar-sync] cleanup sync error for ${uid}:`, err.message)
+          );
+        }
+      }
+    } catch (calErr) {
+      console.error('[calendar-sync] cleanup sync setup error:', calErr.message);
+    }
+
     res.send('Cleanup successful');
   } catch (err) {
     console.error("❌ Cleanup failed:", err.message);
@@ -353,12 +387,31 @@ io.on("connection", function (socket) {
 
 
 
-  socket.on('request-data-for-person', async() => {
+  // Read the caller's Today data and push it to the client.
+  async function emitPersonData() {
     const events = await getEventsForPerson(socket.userId);
     const tasks = await getTasksForPerson(socket.userId);
     const cards = await getCards();
     const cardFiles = await getCardFiles(cards ? cards.map(c => c.id) : []);
     socket.emit('data-for-person', events, tasks, cards, cardFiles);
+  }
+
+  socket.on('request-data-for-person', async() => {
+    // Paint immediately with whatever's already stored.
+    await emitPersonData();
+
+    // Then sync external calendars and re-emit so freshly imported events show.
+    // We AWAIT here (not fire-and-forget) so the second read happens strictly
+    // after the sync's delete+insert completes — otherwise the read races the
+    // sync and returns events mid-rewrite.
+    try {
+      const result = await syncUserCalendars(socket.userId, socket.familyId, supabaseAdmin);
+      if (result && (result.count > 0 || result.errors.length === 0)) {
+        await emitPersonData();
+      }
+    } catch (err) {
+      console.error('[calendar-sync] background sync error:', err.message);
+    }
   });
 
 
@@ -941,6 +994,129 @@ io.on("connection", function (socket) {
       .eq('user_id', socket.userId);
     if (error) console.error(error);
     else socket.emit('push-subscription-deleted');
+  });
+
+
+
+  // ---- External Calendars ----
+
+  async function emitExternalCalendarsList() {
+    const { data, error } = await supabaseAdmin
+      .from('external_calendars')
+      .select('id, name, last_synced_at, created_at')
+      .eq('user_id', socket.userId)
+      .order('created_at', { ascending: true });
+    if (error) { console.error(error); return; }
+    socket.emit('external-calendars-list', data || []);
+  }
+
+  socket.on('get-external-calendars', async () => {
+    await emitExternalCalendarsList();
+  });
+
+  socket.on('add-external-calendar', async (name, icalUrl) => {
+    if (!name || !icalUrl) {
+      socket.emit('external-calendar-error', 'Name and URL are required.');
+      return;
+    }
+    if (!/^https?:\/\/.+/i.test(icalUrl)) {
+      socket.emit('external-calendar-error', 'URL must start with http:// or https://');
+      return;
+    }
+
+    // Reject duplicate URLs for the same user (would collide on the unique index).
+    const { data: existing } = await supabaseAdmin
+      .from('external_calendars')
+      .select('id')
+      .eq('user_id', socket.userId)
+      .eq('ical_url', icalUrl.trim());
+    if (existing && existing.length) {
+      socket.emit('external-calendar-error', 'That calendar is already connected.');
+      return;
+    }
+
+    // Test-fetch the URL before saving to catch invalid/inaccessible URLs early.
+    try {
+      await fetchTodayEvents(icalUrl);
+    } catch (err) {
+      socket.emit('external-calendar-error', `Could not read calendar: ${err.message}`);
+      return;
+    }
+
+    const { data: inserted, error: insertErr } = await supabaseAdmin
+      .from('external_calendars')
+      .insert({ user_id: socket.userId, name: name.trim(), ical_url: icalUrl.trim() })
+      .select()
+      .single();
+
+    if (insertErr) {
+      console.error(insertErr);
+      socket.emit('external-calendar-error', 'Could not save calendar. Please try again.');
+      return;
+    }
+
+    socket.emit('external-calendar-added');
+
+    // Sync immediately so the user sees events right away.
+    try {
+      const result = await syncUserCalendars(socket.userId, socket.familyId, supabaseAdmin);
+      if (result && result.errors && result.errors.length) {
+        socket.emit('external-calendar-error', `Connected, but sync had issues: ${result.errors.join('; ')}`);
+      } else if (result && result.count === 0) {
+        socket.emit('external-calendar-error', 'Connected, but no events were found for today in this calendar.');
+      }
+    } catch (err) {
+      console.error('[calendar-sync] post-add sync error:', err.message);
+      socket.emit('external-calendar-error', `Sync failed: ${err.message}`);
+    }
+
+    await emitExternalCalendarsList();
+    await emitPersonData(); // refresh Today view with newly imported events
+  });
+
+  socket.on('remove-external-calendar', async (calendarId) => {
+    if (!calendarId) return;
+
+    // Verify ownership before deleting.
+    const { data: cal } = await supabaseAdmin
+      .from('external_calendars')
+      .select('id')
+      .eq('id', calendarId)
+      .eq('user_id', socket.userId)
+      .single();
+
+    if (!cal) {
+      socket.emit('external-calendar-error', 'Calendar not found.');
+      return;
+    }
+
+    // Delete imported events from this calendar.
+    await supabaseAdmin
+      .from('events')
+      .delete()
+      .eq('user_id', socket.userId)
+      .eq('external_calendar_id', calendarId);
+
+    // Delete the calendar record (also cascades via FK).
+    const { error } = await supabaseAdmin
+      .from('external_calendars')
+      .delete()
+      .eq('id', calendarId);
+
+    if (error) { console.error(error); return; }
+
+    await emitExternalCalendarsList();
+    await emitPersonData(); // refresh Today view to remove the deleted events
+  });
+
+  socket.on('sync-external-calendars', async () => {
+    try {
+      await syncUserCalendars(socket.userId, socket.familyId, supabaseAdmin);
+    } catch (err) {
+      console.error('[calendar-sync] manual sync error:', err.message);
+    }
+    await emitExternalCalendarsList();
+    await emitPersonData();
   });
 
 

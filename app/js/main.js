@@ -129,12 +129,15 @@ function requestTodayData() {
 
 
 
-function addEventToList(event, event_id, time, isPrivate) {
+function addEventToList(event, event_id, time, isPrivate, isExternal) {
   const li_elem = document.createElement('li');
   li_elem.classList.add("event-item");
+  const deleteBtn = isExternal
+    ? '' // imported events come back on next sync — hiding the button avoids confusion
+    : '<button class="delete-task-and-event-btn">✕</button>';
   li_elem.innerHTML = `
     <span><strong>${time}</strong> — ${event}</span>
-    <button class="delete-task-and-event-btn">✕</button>
+    ${deleteBtn}
   `;
   li_elem.id = event_id;
   my_events_list.appendChild(li_elem);
@@ -231,7 +234,7 @@ socket.on('data-for-person', (events, tasks, cards, cardFiles) => {
   if (events.length > 0) {
     sortedEvents = sortEventsForPerson(events);
     sortedEvents.forEach((event) => {
-      addEventToList(event.title, event.id, event.time, event.is_private);
+      addEventToList(event.title, event.id, event.time, event.is_private, !!event.external_id);
     });
   }
 

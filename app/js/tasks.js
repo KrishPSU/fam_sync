@@ -10,6 +10,6 @@ my_tasks_list.addEventListener('change', function (e) {
 });
 
 
-socket.on('task-created-successfully', (task, taskId, isPrivate) => {
-  addTaskToList(task, taskId, false, isPrivate);
+socket.on('task-created-successfully', (task, taskId, isPrivate, deleteAtDayEnd) => {
+  addTaskToList(task, taskId, false, isPrivate, deleteAtDayEnd);
 });

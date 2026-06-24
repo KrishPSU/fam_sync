@@ -113,7 +113,7 @@ async function syncUserCalendars(userId, familyId, supabaseAdmin) {
 
   const { data: calendars, error: calErr } = await supabaseAdmin
     .from('external_calendars')
-    .select('id, name, ical_url')
+    .select('id, name, ical_url, default_is_private, default_delete_at_day_end')
     .eq('user_id', userId);
 
   if (calErr) {
@@ -122,6 +122,17 @@ async function syncUserCalendars(userId, familyId, supabaseAdmin) {
     return { count, errors };
   }
   if (!calendars || calendars.length === 0) return { count, errors };
+
+  // User edits/deletions of imported events, keyed by calendar + iCal uid. The
+  // sync re-applies these so a re-import doesn't revert the user's changes.
+  const ovMap = new Map();
+  const { data: overrides } = await supabaseAdmin
+    .from('external_event_overrides')
+    .select('external_calendar_id, external_id, action, title, time, is_private, delete_at_day_end')
+    .eq('user_id', userId);
+  if (overrides) {
+    for (const o of overrides) ovMap.set(`${o.external_calendar_id}::${o.external_id}`, o);
+  }
 
   for (const cal of calendars) {
     // 1. Fetch today's events FIRST. If this fails, leave existing events in
@@ -146,18 +157,28 @@ async function syncUserCalendars(userId, familyId, supabaseAdmin) {
       errors.push(`${cal.name} delete: ${delErr.message}`);
     }
 
-    // 3. Insert today's events fresh.
-    if (todayEvents.length > 0) {
-      const rows = todayEvents.map(evt => ({
-        title: evt.title,
-        time: evt.time,
+    // 3. Insert today's events fresh, applying any user overrides: skip events
+    //    the user deleted, and re-apply edits instead of the source values.
+    //    Events without an override use this calendar's defaults.
+    const calPrivate = cal.default_is_private != null ? cal.default_is_private : true;
+    const calDelete = cal.default_delete_at_day_end != null ? cal.default_delete_at_day_end : false;
+    const rows = [];
+    for (const evt of todayEvents) {
+      const ov = ovMap.get(`${cal.id}::${evt.uid}`);
+      if (ov && ov.action === 'delete') continue; // user removed this event
+      const edited = ov && ov.action === 'edit';
+      rows.push({
+        title: edited && ov.title != null ? ov.title : evt.title,
+        time: edited && ov.time != null ? ov.time : evt.time,
         user_id: userId,
         family_id: familyId,
-        is_private: true,
-        delete_at_day_end: false,
+        is_private: edited && ov.is_private != null ? ov.is_private : calPrivate,
+        delete_at_day_end: edited && ov.delete_at_day_end != null ? ov.delete_at_day_end : calDelete,
         external_id: evt.uid,
         external_calendar_id: cal.id,
-      }));
+      });
+    }
+    if (rows.length > 0) {
       const { data: ins, error: insErr } = await supabaseAdmin
         .from('events')
         .insert(rows)

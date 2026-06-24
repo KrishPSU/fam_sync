@@ -249,6 +249,18 @@ app.get('/api/cleanup', async (req, res) => {
       }
     }
 
+    // Purge stale calendar-event overrides. They're keyed by the iCal uid
+    // (occurrence-specific for recurring events), so once their day has passed
+    // they no longer match anything and are just dead rows.
+    {
+      const cutoff = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabaseAdmin
+        .from('external_event_overrides')
+        .delete()
+        .lt('created_at', cutoff);
+      if (error) console.error('❌ Error purging external_event_overrides:', error.message);
+    }
+
     console.log("✅ Daily cleanup succeeded");
 
     // Sync external calendars for all users so next-day events are ready.
@@ -344,7 +356,7 @@ io.on("connection", function (socket) {
     if (error) {
       console.error(error);
     } else {
-      socket.emit('event-created-successfully', title, data[0].id, time, data[0].is_private);
+      socket.emit('event-created-successfully', title, data[0].id, time, data[0].is_private, data[0].delete_at_day_end);
     }
   });
 
@@ -360,7 +372,7 @@ io.on("connection", function (socket) {
     if (error) {
       console.error(error);
     } else {
-      socket.emit('task-created-successfully', task, data[0].id, data[0].is_private);
+      socket.emit('task-created-successfully', task, data[0].id, data[0].is_private, data[0].delete_at_day_end);
     }
   });
 
@@ -757,6 +769,46 @@ io.on("connection", function (socket) {
   });
 
 
+  socket.on('update-task', async (taskId, title, isPrivate, deleteAtDayEnd) => {
+    const { error } = await socket.userSupabase
+      .from('tasks')
+      .update({ title, is_private: !!isPrivate, delete_at_day_end: !!deleteAtDayEnd })
+      .eq('id', taskId)
+
+    if (error) console.error(error); // RLS blocks non-owners
+  });
+
+
+  socket.on('update-event', async (eventId, title, time, isPrivate, deleteAtDayEnd) => {
+    const { data, error } = await socket.userSupabase
+      .from('events')
+      .update({ title, time, is_private: !!isPrivate, delete_at_day_end: !!deleteAtDayEnd })
+      .eq('id', eventId)
+      .select('external_id, external_calendar_id')
+
+    if (error || !data || data.length === 0) {
+      if (error) console.error(error); // RLS blocks non-owners
+      return;
+    }
+
+    // For imported calendar events, persist the edit so the next sync re-applies
+    // it instead of reverting to the source version.
+    const ev = data[0];
+    if (ev.external_id && ev.external_calendar_id) {
+      const { error: ovErr } = await socket.userSupabase
+        .from('external_event_overrides')
+        .upsert({
+          user_id: socket.userId,
+          external_calendar_id: ev.external_calendar_id,
+          external_id: ev.external_id,
+          action: 'edit',
+          title, time, is_private: !!isPrivate, delete_at_day_end: !!deleteAtDayEnd,
+        }, { onConflict: 'user_id,external_calendar_id,external_id' });
+      if (ovErr) console.error(ovErr);
+    }
+  });
+
+
 
 
 
@@ -799,15 +851,34 @@ io.on("connection", function (socket) {
 
 
   socket.on('delete-event', async (eventId) => {
-    const { data, error } = await socket.userSupabase
+    // Read the external identity first so we can tombstone an imported event
+    // (otherwise the next calendar sync would re-import it).
+    const { data: rows } = await socket.userSupabase
+      .from('events')
+      .select('external_id, external_calendar_id')
+      .eq('id', eventId);
+
+    const { error } = await socket.userSupabase
       .from('events')
       .delete()
       .eq('id', eventId)
 
     if (error) {
       console.error(error);
-    } else {
-      // return data;
+      return;
+    }
+
+    const ev = rows && rows[0];
+    if (ev && ev.external_id && ev.external_calendar_id) {
+      const { error: ovErr } = await socket.userSupabase
+        .from('external_event_overrides')
+        .upsert({
+          user_id: socket.userId,
+          external_calendar_id: ev.external_calendar_id,
+          external_id: ev.external_id,
+          action: 'delete',
+        }, { onConflict: 'user_id,external_calendar_id,external_id' });
+      if (ovErr) console.error(ovErr);
     }
   });
 
@@ -1003,7 +1074,7 @@ io.on("connection", function (socket) {
   async function emitExternalCalendarsList() {
     const { data, error } = await supabaseAdmin
       .from('external_calendars')
-      .select('id, name, last_synced_at, created_at')
+      .select('id, name, last_synced_at, created_at, default_is_private, default_delete_at_day_end')
       .eq('user_id', socket.userId)
       .order('created_at', { ascending: true });
     if (error) { console.error(error); return; }
@@ -1012,6 +1083,28 @@ io.on("connection", function (socket) {
 
   socket.on('get-external-calendars', async () => {
     await emitExternalCalendarsList();
+  });
+
+  // Per-calendar defaults for imported events (private / auto-delete at midnight).
+  socket.on('update-calendar-defaults', async (calendarId, isPrivate, deleteAtDayEnd) => {
+    if (!calendarId) return;
+    const { data, error } = await socket.userSupabase
+      .from('external_calendars')
+      .update({ default_is_private: !!isPrivate, default_delete_at_day_end: !!deleteAtDayEnd })
+      .eq('id', calendarId)
+      .select('id');
+    if (error || !data || data.length === 0) {
+      if (error) console.error(error); // RLS blocked (not owner) or not found
+      return;
+    }
+    // Re-sync so the new defaults take effect on already-imported events.
+    // Per-event overrides still win (handled inside syncUserCalendars).
+    try {
+      await syncUserCalendars(socket.userId, socket.familyId, supabaseAdmin);
+    } catch (err) {
+      console.error('[calendar-sync] defaults re-sync error:', err.message);
+    }
+    await emitPersonData();
   });
 
   socket.on('add-external-calendar', async (name, icalUrl) => {

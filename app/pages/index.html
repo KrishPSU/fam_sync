@@ -30,6 +30,8 @@
   <script defer src="../js/card.js"></script>
   <script defer src="../js/card-file-viewer.js"></script>
   <script defer src="../js/edit-card-modal.js"></script>
+  <script defer src="../js/edit-task-modal.js"></script>
+  <script defer src="../js/edit-event-modal.js"></script>
   <script defer src="../js/delete-task-and-event.js"></script>
   <script defer src="../js/ping-page-display.js"></script>
   <script defer src="../js/files.js"></script>
@@ -550,6 +552,82 @@
         <div class="modal-buttons">
           <button type="submit" id="done-editing-card" class="submit-btn">Save</button>
           <button type="button" id="close-edit-card-modal-btn" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Edit Task Modal -->
+  <div id="editTaskModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Edit Task</h2>
+      <form id="editTaskForm">
+        <label>Task
+          <input id="edit-task-title" type="text" name="title" required />
+        </label>
+
+        <div class="delete-end-toggle">
+          <span class="label">Only I can delete</span>
+          <label class="switch">
+            <input type="checkbox" id="edit-task-delete-toggle">
+            <span class="slider"></span>
+          </label>
+          <span class="label">Auto delete at 12 AM</span>
+        </div>
+
+        <div class="privacy-toggle-row hidden" id="edit-task-privacy-row">
+          <span class="label">Family can see</span>
+          <label class="switch">
+            <input type="checkbox" id="edit-task-privacy-toggle">
+            <span class="slider"></span>
+          </label>
+          <span class="label">Only me</span>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="submit" class="submit-btn">Save</button>
+          <button type="button" id="close-edit-task-modal-btn" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Edit Event Modal -->
+  <div id="editEventModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Edit Event</h2>
+      <form id="editEventForm">
+        <label>Title
+          <input id="edit-event-title" type="text" name="title" required />
+        </label>
+
+        <label>Time
+          <input id="edit-event-time" type="time" name="time" required />
+        </label>
+
+        <div class="delete-end-toggle">
+          <span class="label">Only I can delete</span>
+          <label class="switch">
+            <input type="checkbox" id="edit-event-delete-toggle">
+            <span class="slider"></span>
+          </label>
+          <span class="label">Auto delete at 12 AM</span>
+        </div>
+
+        <div class="privacy-toggle-row hidden" id="edit-event-privacy-row">
+          <span class="label">Family can see</span>
+          <label class="switch">
+            <input type="checkbox" id="edit-event-privacy-toggle">
+            <span class="slider"></span>
+          </label>
+          <span class="label">Only me</span>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="submit" class="submit-btn">Save</button>
+          <button type="button" id="close-edit-event-modal-btn" class="cancel-btn">Cancel</button>
         </div>
       </form>
     </div>

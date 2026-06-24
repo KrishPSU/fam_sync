@@ -18,6 +18,7 @@ document.addEventListener('click', function (e) {
   // Handle Edit
   if (e.target.classList.contains('edit-btn')) {
     const card = e.target.closest('.card');
+    if (!card) return; // task/event menus reuse these classes — handled elsewhere
     console.log("Editing card:", card);
     currentCardBeingEditedId = card.id;
     let cardTitleElem = card.querySelector('.card-top h2');
@@ -30,6 +31,7 @@ document.addEventListener('click', function (e) {
   // Handle Delete
   if (e.target.classList.contains('delete-btn')) {
     const card = e.target.closest('.card');
+    if (!card) return; // task/event menus reuse these classes — handled elsewhere
     console.log("Deleting card:", card);
     socket.emit('delete-card', card.id);
     card.remove(); // or call a delete function

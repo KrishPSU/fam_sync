@@ -447,6 +447,7 @@ input[type="checkbox"] {
   align-items: center;
   justify-content: space-between;
   padding: 6px 0;
+  position: relative; /* anchors the absolutely-positioned .dots-menu */
 }
 
 /* Task row: checkbox + text grouped on the left */
@@ -531,6 +532,23 @@ body.dark-mode .round input[type="checkbox"]:checked + label {
   align-items: center;
   justify-content: space-between;
   padding: 6px 0;
+  position: relative; /* anchors the absolutely-positioned .dots-menu */
+}
+
+/* 3-dot menu on task/event rows: keep the button centered in the row (cards
+   nudge it up with translateY, which looks off in these shorter flex rows) and
+   anchor the dropdown to the row's right edge. */
+.task-item .dots-button,
+.event-item .dots-button {
+  transform: none;
+  font-size: 1.3rem;
+  margin-left: 8px;
+}
+
+.task-item .dots-menu,
+.event-item .dots-menu {
+  top: 28px;
+  right: 0;
 }
 
 /* Public visibility pill — shown on own public events, tasks, and cards */

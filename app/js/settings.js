@@ -183,15 +183,42 @@ function renderExternalCalendars(calendars) {
     const li = document.createElement('li');
     li.className = 'ext-cal-item';
     li.innerHTML = `
-      <div class="ext-cal-item-info">
-        <span class="ext-cal-item-name">${cal.name}</span>
-        <span class="ext-cal-item-synced">${formatSyncTime(cal.last_synced_at)}</span>
+      <div class="ext-cal-item-header">
+        <div class="ext-cal-item-info">
+          <span class="ext-cal-item-name">${cal.name}</span>
+          <span class="ext-cal-item-synced">${formatSyncTime(cal.last_synced_at)}</span>
+        </div>
+        <button class="ext-cal-remove-btn" data-id="${cal.id}" title="Remove calendar">✕</button>
       </div>
-      <button class="ext-cal-remove-btn" data-id="${cal.id}" title="Remove calendar">✕</button>
+      <div class="ext-cal-defaults">
+        <div class="ext-cal-default-row">
+          <span class="ext-cal-default-label">Private by default</span>
+          <label class="switch settings-switch">
+            <input type="checkbox" class="ext-cal-private-toggle" ${cal.default_is_private ? 'checked' : ''} />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="ext-cal-default-row">
+          <span class="ext-cal-default-label">Auto-delete at 12 AM</span>
+          <label class="switch settings-switch">
+            <input type="checkbox" class="ext-cal-delete-toggle" ${cal.default_delete_at_day_end ? 'checked' : ''} />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
     `;
     li.querySelector('.ext-cal-remove-btn').addEventListener('click', () => {
       socket.emit('remove-external-calendar', cal.id);
     });
+
+    const privateToggle = li.querySelector('.ext-cal-private-toggle');
+    const deleteToggle = li.querySelector('.ext-cal-delete-toggle');
+    const saveDefaults = () => {
+      socket.emit('update-calendar-defaults', cal.id, privateToggle.checked, deleteToggle.checked);
+    };
+    privateToggle.addEventListener('change', saveDefaults);
+    deleteToggle.addEventListener('change', saveDefaults);
+
     list.appendChild(li);
   });
 }

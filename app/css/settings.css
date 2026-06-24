@@ -259,12 +259,47 @@ body.dark-mode .settings-signout-btn:hover {
 
 .ext-cal-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 8px;
   background: #f5f5f5;
   border-radius: 8px;
   padding: 8px 10px;
+}
+
+.ext-cal-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Per-calendar default toggles */
+.ext-cal-defaults {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #e3e3e3;
+}
+
+.ext-cal-default-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ext-cal-default-label {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+body.dark-mode .ext-cal-defaults {
+  border-top-color: #3a3f44;
+}
+
+body.dark-mode .ext-cal-default-label {
+  color: #b8b8b8;
 }
 
 .ext-cal-item-info {

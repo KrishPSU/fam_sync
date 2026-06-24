@@ -44,8 +44,8 @@ event_form.addEventListener('submit', function(e) {
 });
 
 
-socket.on('event-created-successfully', (event, eventId, time, isPrivate) => {
-  addEventToList(event, eventId, time, isPrivate);
+socket.on('event-created-successfully', (event, eventId, time, isPrivate, deleteAtDayEnd) => {
+  addEventToList(event, eventId, time, isPrivate, false, deleteAtDayEnd);
 });
 
 

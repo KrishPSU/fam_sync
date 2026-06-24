@@ -95,7 +95,7 @@ document.getElementById('signout-btn').addEventListener('click', async () => {
 });
 
 function setPrivacyTogglesVisible(visible) {
-  ['event-privacy-row', 'task-privacy-row', 'card-privacy-row', 'edit-privacy-row'].forEach(id => {
+  ['event-privacy-row', 'task-privacy-row', 'card-privacy-row', 'edit-privacy-row', 'edit-task-privacy-row', 'edit-event-privacy-row'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('hidden', !visible);
   });
@@ -129,26 +129,36 @@ function requestTodayData() {
 
 
 
-function addEventToList(event, event_id, time, isPrivate, isExternal) {
+function addEventToList(event, event_id, time, isPrivate, isExternal, deleteAtDayEnd = false) {
   const li_elem = document.createElement('li');
   li_elem.classList.add("event-item");
-  const deleteBtn = isExternal
-    ? '' // imported events come back on next sync — hiding the button avoids confusion
-    : '<button class="delete-task-and-event-btn">✕</button>';
+  // Imported (synced) events get the menu too — edits/deletes are persisted as
+  // overrides server-side so they survive the calendar re-sync (see update-event
+  // / delete-event handlers + external_event_overrides).
+  const menu =
+    `<button class="dots-button">⋯</button>
+     <div class="dots-menu hidden">
+       <button class="edit-btn">Edit</button>
+       <button class="delete-btn">Delete</button>
+     </div>`;
   li_elem.innerHTML = `
     <span><strong>${time}</strong> — ${event}</span>
-    ${deleteBtn}
+    ${menu}
   `;
   li_elem.id = event_id;
+  li_elem.dataset.isPrivate = isPrivate;
+  li_elem.dataset.deleteAtDayEnd = deleteAtDayEnd;
+  li_elem.dataset.title = event;
+  li_elem.dataset.time = time;
   my_events_list.appendChild(li_elem);
 }
 
 
-function addTaskToList(task, task_id, isComplete, isPrivate) {
+function addTaskToList(task, task_id, isComplete, isPrivate, deleteAtDayEnd = false) {
   const completedClass = isComplete ? ' completed' : '';
   const checkedAttr = isComplete ? ' checked' : '';
   const innerHtml = `
-    <div class="task-item">
+    <div class="task-item" data-is-private="${isPrivate}" data-delete-at-day-end="${deleteAtDayEnd}">
       <div class="task${completedClass}" id="${task_id}">
         <div class="round">
           <input type="checkbox" id="cb-${task_id}"${checkedAttr} />
@@ -156,7 +166,11 @@ function addTaskToList(task, task_id, isComplete, isPrivate) {
         </div>
         <span class="task-text">${task}</span>
       </div>
-      <button class="delete-task-and-event-btn">✕</button>
+      <button class="dots-button">⋯</button>
+      <div class="dots-menu hidden">
+        <button class="edit-btn">Edit</button>
+        <button class="delete-btn">Delete</button>
+      </div>
     </div>
   `;
   my_tasks_list.innerHTML += innerHtml;
@@ -234,13 +248,13 @@ socket.on('data-for-person', (events, tasks, cards, cardFiles) => {
   if (events.length > 0) {
     sortedEvents = sortEventsForPerson(events);
     sortedEvents.forEach((event) => {
-      addEventToList(event.title, event.id, event.time, event.is_private, !!event.external_id);
+      addEventToList(event.title, event.id, event.time, event.is_private, !!event.external_id, event.delete_at_day_end);
     });
   }
 
   if (tasks.length > 0) {
     tasks.forEach((task) => {
-      addTaskToList(task.title, task.id, task.complete, task.is_private);
+      addTaskToList(task.title, task.id, task.complete, task.is_private, task.delete_at_day_end);
     });
   }
 

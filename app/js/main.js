@@ -137,21 +137,22 @@ function formatEventTimeLabel(start, end) {
   return end ? `${start} to ${end}` : start;
 }
 
+// Inline edit (pencil in a gray box) + delete (✕ on a red box) controls for
+// task/event rows. The edit-btn / delete-btn classes drive the existing
+// edit/delete click handlers. Imported (synced) events get them too — their
+// edits/deletes are persisted server-side so they survive the calendar re-sync.
+const ITEM_ACTIONS_HTML =
+  `<div class="item-actions">
+     <button class="edit-btn" title="Edit" aria-label="Edit"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+     <button class="delete-btn" title="Delete" aria-label="Delete">✕</button>
+   </div>`;
+
 function addEventToList(event, event_id, time, isPrivate, isExternal, deleteAtDayEnd = false, endTime = '') {
   const li_elem = document.createElement('li');
   li_elem.classList.add("event-item");
-  // Imported (synced) events get the menu too — edits/deletes are persisted as
-  // overrides server-side so they survive the calendar re-sync (see update-event
-  // / delete-event handlers + external_event_overrides).
-  const menu =
-    `<button class="dots-button">⋯</button>
-     <div class="dots-menu hidden">
-       <button class="edit-btn">Edit</button>
-       <button class="delete-btn">Delete</button>
-     </div>`;
   li_elem.innerHTML = `
     <span><strong>${formatEventTimeLabel(time, endTime)}</strong> — ${event}</span>
-    ${menu}
+    ${ITEM_ACTIONS_HTML}
   `;
   li_elem.id = event_id;
   li_elem.dataset.isPrivate = isPrivate;
@@ -175,11 +176,7 @@ function addTaskToList(task, task_id, isComplete, isPrivate, deleteAtDayEnd = fa
         </div>
         <span class="task-text">${task}</span>
       </div>
-      <button class="dots-button">⋯</button>
-      <div class="dots-menu hidden">
-        <button class="edit-btn">Edit</button>
-        <button class="delete-btn">Delete</button>
-      </div>
+      ${ITEM_ACTIONS_HTML}
     </div>
   `;
   my_tasks_list.innerHTML += innerHtml;

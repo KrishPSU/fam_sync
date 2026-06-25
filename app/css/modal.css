@@ -105,6 +105,36 @@ textarea#edit-desc:focus {
   background: #e0e0e0;
 }
 
+/* Destructive confirm button (e.g. delete confirmation). Self-contained sizing
+   (mirrors .submit-btn) so no blue .submit-btn rule can override the red. */
+.danger-btn {
+  flex: 1;
+  padding: 0.7rem;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: #d73737;
+  color: #fff;
+}
+.danger-btn:hover {
+  background: #c02e2e;
+}
+
+/* Confirm/delete modal: centered message */
+.confirm-modal-content {
+  text-align: center;
+}
+
+.confirm-modal-text {
+  font-size: 0.95rem;
+  color: #555;
+  margin: 0.25rem 0 0.5rem;
+}
+body.dark-mode .confirm-modal-text {
+  color: #b8b8b8;
+}
+
 
 
 

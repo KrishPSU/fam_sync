@@ -51,8 +51,11 @@ document.addEventListener('click', function (e) {
   }
 
   if (e.target.classList.contains('delete-btn')) {
-    socket.emit('delete-event', item.id);
-    item.remove();
+    const eventId = item.id;
+    openDeleteConfirm(() => {
+      socket.emit('delete-event', eventId);
+      item.remove();
+    }, 'event');
   }
 });
 

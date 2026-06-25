@@ -30,6 +30,7 @@
   <script defer src="../js/card.js"></script>
   <script defer src="../js/card-file-viewer.js"></script>
   <script defer src="../js/edit-card-modal.js"></script>
+  <script defer src="../js/confirm-modal.js"></script>
   <script defer src="../js/edit-task-modal.js"></script>
   <script defer src="../js/edit-event-modal.js"></script>
   <script defer src="../js/delete-task-and-event.js"></script>
@@ -638,6 +639,19 @@
           <button type="button" id="close-edit-event-modal-btn" class="cancel-btn">Cancel</button>
         </div>
       </form>
+    </div>
+  </div>
+
+
+  <!-- Confirm Delete Modal (tasks & events) -->
+  <div id="confirmDeleteModal" class="modal hidden">
+    <div class="modal-content confirm-modal-content">
+      <h2 id="confirm-delete-title">Delete this?</h2>
+      <p class="confirm-modal-text">This can't be undone — you won't be able to get it back.</p>
+      <div class="modal-buttons">
+        <button type="button" id="confirm-delete-btn" class="danger-btn">Delete</button>
+        <button type="button" id="cancel-delete-btn" class="cancel-btn">Cancel</button>
+      </div>
     </div>
   </div>
 

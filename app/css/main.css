@@ -447,7 +447,6 @@ input[type="checkbox"] {
   align-items: center;
   justify-content: space-between;
   padding: 6px 0;
-  position: relative; /* anchors the absolutely-positioned .dots-menu */
 }
 
 /* Task row: checkbox + text grouped on the left */
@@ -532,23 +531,71 @@ body.dark-mode .round input[type="checkbox"]:checked + label {
   align-items: center;
   justify-content: space-between;
   padding: 6px 0;
-  position: relative; /* anchors the absolutely-positioned .dots-menu */
 }
 
-/* 3-dot menu on task/event rows: keep the button centered in the row (cards
-   nudge it up with translateY, which looks off in these shorter flex rows) and
-   anchor the dropdown to the row's right edge. */
-.task-item .dots-button,
-.event-item .dots-button {
-  transform: none;
-  font-size: 1.3rem;
+/* Inline edit + delete controls on task/event rows (edit on the left,
+   delete on the right). */
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
   margin-left: 8px;
 }
 
-.task-item .dots-menu,
-.event-item .dots-menu {
-  top: 28px;
-  right: 0;
+.item-actions .edit-btn,
+.item-actions .delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  line-height: 1;
+  font-size: 0.85rem;
+  transition: background-color 0.15s ease;
+}
+
+/* Edit: pencil in a gray box */
+.item-actions .edit-btn {
+  background-color: #e8e8e8;
+  color: #444;
+}
+.item-actions .edit-btn:hover {
+  background-color: #dadada;
+}
+
+/* Delete: ✕ on a red box */
+.item-actions .delete-btn {
+  background-color: #fcdada;
+  color: #d73737;
+}
+.item-actions .delete-btn:hover {
+  background-color: #f6c2c2;
+}
+
+/* Let clicks land on the button, not the inner SVG, so the handlers
+   (which check the target's class) still fire. */
+.item-actions button svg {
+  pointer-events: none;
+}
+
+body.dark-mode .item-actions .edit-btn {
+  background-color: #3a3f44;
+  color: #d0d0d0;
+}
+body.dark-mode .item-actions .edit-btn:hover {
+  background-color: #454a4f;
+}
+body.dark-mode .item-actions .delete-btn {
+  background-color: #4a2a2a;
+  color: #ff6b6b;
+}
+body.dark-mode .item-actions .delete-btn:hover {
+  background-color: #5a3232;
 }
 
 /* Public visibility pill — shown on own public events, tasks, and cards */

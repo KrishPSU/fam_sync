@@ -20,9 +20,10 @@ function parseTimeTo24h(timeStr) {
 }
 
 
-function openEditEventModal(currentTitle, currentTime, isPrivate, deleteAtDayEnd) {
+function openEditEventModal(currentTitle, currentTime, isPrivate, deleteAtDayEnd, currentEndTime) {
   document.getElementById('edit-event-title').value = currentTitle;
   document.getElementById('edit-event-time').value = parseTimeTo24h(currentTime);
+  document.getElementById('edit-event-time-end').value = parseTimeTo24h(currentEndTime);
   document.getElementById('edit-event-delete-toggle').checked = !!deleteAtDayEnd;
   document.getElementById('edit-event-privacy-toggle').checked = !!isPrivate;
   document.getElementById('editEventModal').classList.remove('hidden');
@@ -43,9 +44,10 @@ document.addEventListener('click', function (e) {
     currentEventBeingEditedId = item.id;
     const title = item.dataset.title;
     const time = item.dataset.time;
+    const endTime = item.dataset.endTime;
     const isPrivate = item.dataset.isPrivate === 'true';
     const deleteAtDayEnd = item.dataset.deleteAtDayEnd === 'true';
-    openEditEventModal(title, time, isPrivate, deleteAtDayEnd);
+    openEditEventModal(title, time, isPrivate, deleteAtDayEnd, endTime);
   }
 
   if (e.target.classList.contains('delete-btn')) {
@@ -59,20 +61,23 @@ edit_event_form.addEventListener('submit', function (e) {
   e.preventDefault();
   const title = document.getElementById('edit-event-title').value;
   const formattedTime = formatTimeWithAMPM(document.getElementById('edit-event-time').value);
+  const endVal = document.getElementById('edit-event-time-end').value;
+  const formattedEnd = endVal ? formatTimeWithAMPM(endVal) : '';
   const isPrivate = document.getElementById('edit-event-privacy-toggle').checked;
   const deleteAtDayEnd = document.getElementById('edit-event-delete-toggle').checked;
 
   const item = document.getElementById(currentEventBeingEditedId);
   if (item) {
     const span = item.querySelector('span');
-    if (span) span.innerHTML = `<strong>${formattedTime}</strong> — ${title}`;
+    if (span) span.innerHTML = `<strong>${formatEventTimeLabel(formattedTime, formattedEnd)}</strong> — ${title}`;
     item.dataset.title = title;
     item.dataset.time = formattedTime;
+    item.dataset.endTime = formattedEnd;
     item.dataset.isPrivate = isPrivate;
     item.dataset.deleteAtDayEnd = deleteAtDayEnd;
   }
 
-  socket.emit('update-event', currentEventBeingEditedId, title, formattedTime, isPrivate, deleteAtDayEnd);
+  socket.emit('update-event', currentEventBeingEditedId, title, formattedTime, isPrivate, deleteAtDayEnd, formattedEnd);
   close_edit_event_modal();
   this.reset();
 });

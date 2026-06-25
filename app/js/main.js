@@ -124,12 +124,20 @@ const LOADER_HTML = '<div class="loader-wrap"><div class="loader"></div></div>';
 function requestTodayData() {
   my_events_list.innerHTML = LOADER_HTML;
   my_tasks_list.innerHTML = LOADER_HTML;
-  socket.emit('request-data-for-person');
+  // Send the client's local time-of-day so the server can drop events that
+  // have already passed (the server has no reliable notion of the family's tz).
+  const now = new Date();
+  socket.emit('request-data-for-person', now.getHours() * 60 + now.getMinutes());
 }
 
 
 
-function addEventToList(event, event_id, time, isPrivate, isExternal, deleteAtDayEnd = false) {
+// "10:00 PM to 11:00 PM" when there's an end time, else just "10:00 PM".
+function formatEventTimeLabel(start, end) {
+  return end ? `${start} to ${end}` : start;
+}
+
+function addEventToList(event, event_id, time, isPrivate, isExternal, deleteAtDayEnd = false, endTime = '') {
   const li_elem = document.createElement('li');
   li_elem.classList.add("event-item");
   // Imported (synced) events get the menu too — edits/deletes are persisted as
@@ -142,7 +150,7 @@ function addEventToList(event, event_id, time, isPrivate, isExternal, deleteAtDa
        <button class="delete-btn">Delete</button>
      </div>`;
   li_elem.innerHTML = `
-    <span><strong>${time}</strong> — ${event}</span>
+    <span><strong>${formatEventTimeLabel(time, endTime)}</strong> — ${event}</span>
     ${menu}
   `;
   li_elem.id = event_id;
@@ -150,6 +158,7 @@ function addEventToList(event, event_id, time, isPrivate, isExternal, deleteAtDa
   li_elem.dataset.deleteAtDayEnd = deleteAtDayEnd;
   li_elem.dataset.title = event;
   li_elem.dataset.time = time;
+  li_elem.dataset.endTime = endTime || '';
   my_events_list.appendChild(li_elem);
 }
 
@@ -248,7 +257,7 @@ socket.on('data-for-person', (events, tasks, cards, cardFiles) => {
   if (events.length > 0) {
     sortedEvents = sortEventsForPerson(events);
     sortedEvents.forEach((event) => {
-      addEventToList(event.title, event.id, event.time, event.is_private, !!event.external_id, event.delete_at_day_end);
+      addEventToList(event.title, event.id, event.time, event.is_private, !!event.external_id, event.delete_at_day_end, event.end_time);
     });
   }
 

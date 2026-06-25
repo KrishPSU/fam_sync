@@ -36,6 +36,12 @@
   font-size: 0.95rem;
 }
 
+.optional-hint {
+  color: #999;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
 .modal-content input,
 .modal-content select {
   width: 100%;

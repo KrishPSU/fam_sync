@@ -307,6 +307,20 @@ app.get('/api/cleanup', async (req, res) => {
 
 
 
+// Parse a stored "h:mm AM/PM" event time into minutes since midnight, or null
+// if it can't be parsed. Used to detect events whose time has already passed.
+function eventTimeToMinutes(timeStr) {
+  const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(String(timeStr || '').trim());
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = parseInt(m[2], 10);
+  const ap = m[3].toUpperCase();
+  if (ap === 'PM' && h !== 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return h * 60 + min;
+}
+
+
 io.on("connection", function (socket) {
 
   console.log("New socket connection!");
@@ -346,17 +360,17 @@ io.on("connection", function (socket) {
 
 
 
-  socket.on('new-event', async(title, time, deleteAtEndOfDay, isPrivate) => {
+  socket.on('new-event', async(title, time, endTime, deleteAtEndOfDay, isPrivate) => {
     if (!socket.familyId) return;
     const { data, error } = await socket.userSupabase
       .from('events')
-      .insert({ title: title, time: time, user_id: socket.userId, family_id: socket.familyId, delete_at_day_end: deleteAtEndOfDay, is_private: !!isPrivate })
+      .insert({ title: title, time: time, end_time: endTime || null, user_id: socket.userId, family_id: socket.familyId, delete_at_day_end: deleteAtEndOfDay, is_private: !!isPrivate })
       .select()
 
     if (error) {
       console.error(error);
     } else {
-      socket.emit('event-created-successfully', title, data[0].id, time, data[0].is_private, data[0].delete_at_day_end);
+      socket.emit('event-created-successfully', title, data[0].id, time, data[0].is_private, data[0].delete_at_day_end, data[0].end_time);
     }
   });
 
@@ -408,8 +422,53 @@ io.on("connection", function (socket) {
     socket.emit('data-for-person', events, tasks, cards, cardFiles);
   }
 
-  socket.on('request-data-for-person', async() => {
-    // Paint immediately with whatever's already stored.
+  // Delete the caller's events whose time has already passed (relative to the
+  // client-supplied local time-of-day). Imported events are also tombstoned so
+  // the calendar re-sync won't bring them back for the rest of the day.
+  async function deleteExpiredOwnEvents(nowMinutes) {
+    if (typeof nowMinutes !== 'number' || !Number.isFinite(nowMinutes)) return;
+    const { data: evs, error } = await socket.userSupabase
+      .from('events')
+      .select('id, time, end_time, external_id, external_calendar_id')
+      .eq('user_id', socket.userId);
+    if (error || !evs || !evs.length) return;
+
+    const expired = evs.filter(e => {
+      const startM = eventTimeToMinutes(e.time);
+      const endM = eventTimeToMinutes(e.end_time);
+      // Prefer the end time: an event lives until it ends. A midnight end
+      // (12:00 AM) means "end of day", and an end earlier than the start means
+      // the event runs past midnight — either way it isn't expired today.
+      if (endM != null) {
+        const effEnd = endM === 0 ? 24 * 60 : endM; // midnight = end of day
+        if (startM != null && effEnd < startM) return false; // crosses midnight
+        return effEnd < nowMinutes;
+      }
+      // No end time: fall back to expiring once the start has passed.
+      return startM != null && startM > 0 && startM < nowMinutes;
+    });
+    if (!expired.length) return;
+
+    await socket.userSupabase.from('events').delete().in('id', expired.map(e => e.id));
+
+    const tombstones = expired
+      .filter(e => e.external_id && e.external_calendar_id)
+      .map(e => ({
+        user_id: socket.userId,
+        external_calendar_id: e.external_calendar_id,
+        external_id: e.external_id,
+        action: 'delete',
+      }));
+    if (tombstones.length) {
+      await socket.userSupabase
+        .from('external_event_overrides')
+        .upsert(tombstones, { onConflict: 'user_id,external_calendar_id,external_id' });
+    }
+  }
+
+  socket.on('request-data-for-person', async(nowMinutes) => {
+    // Drop already-passed events, then paint with whatever's still current.
+    await deleteExpiredOwnEvents(nowMinutes);
     await emitPersonData();
 
     // Then sync external calendars and re-emit so freshly imported events show.
@@ -418,6 +477,9 @@ io.on("connection", function (socket) {
     // sync and returns events mid-rewrite.
     try {
       const result = await syncUserCalendars(socket.userId, socket.familyId, supabaseAdmin);
+      // The sync re-imports today's events from the source, including ones that
+      // already passed — drop those again (and tombstone them) before repainting.
+      await deleteExpiredOwnEvents(nowMinutes);
       if (result && (result.count > 0 || result.errors.length === 0)) {
         await emitPersonData();
       }
@@ -779,10 +841,10 @@ io.on("connection", function (socket) {
   });
 
 
-  socket.on('update-event', async (eventId, title, time, isPrivate, deleteAtDayEnd) => {
+  socket.on('update-event', async (eventId, title, time, isPrivate, deleteAtDayEnd, endTime) => {
     const { data, error } = await socket.userSupabase
       .from('events')
-      .update({ title, time, is_private: !!isPrivate, delete_at_day_end: !!deleteAtDayEnd })
+      .update({ title, time, end_time: endTime || null, is_private: !!isPrivate, delete_at_day_end: !!deleteAtDayEnd })
       .eq('id', eventId)
       .select('external_id, external_calendar_id')
 
@@ -802,7 +864,7 @@ io.on("connection", function (socket) {
           external_calendar_id: ev.external_calendar_id,
           external_id: ev.external_id,
           action: 'edit',
-          title, time, is_private: !!isPrivate, delete_at_day_end: !!deleteAtDayEnd,
+          title, time, end_time: endTime || null, is_private: !!isPrivate, delete_at_day_end: !!deleteAtDayEnd,
         }, { onConflict: 'user_id,external_calendar_id,external_id' });
       if (ovErr) console.error(ovErr);
     }

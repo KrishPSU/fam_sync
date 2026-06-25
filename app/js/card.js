@@ -15,6 +15,11 @@ document.addEventListener('click', function (e) {
     return;
   }
 
+  // Task/event menus reuse .edit-btn/.delete-btn but live INSIDE the Tasks/Events
+  // section (which is itself a .card). Let their own handlers deal with them so we
+  // don't delete/edit the whole section card.
+  if (e.target.closest('.task-item, .event-item')) return;
+
   // Handle Edit
   if (e.target.classList.contains('edit-btn')) {
     const card = e.target.closest('.card');

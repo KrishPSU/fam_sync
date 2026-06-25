@@ -33,19 +33,20 @@ event_form.addEventListener('submit', function(e) {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(this));
   const formattedTime = formatTimeWithAMPM(data.time);
+  const formattedEnd = data.endTime ? formatTimeWithAMPM(data.endTime) : '';
   // const type = data.isTask ? "Task" : "Event";
 
   // alert(`Event added:\n${data.title} at ${formattedTime}`);
   console.log(`Event added:\n${data.title} at ${formattedTime}`);
   // createClientEvent(data.title, formattedTime);
-  socket.emit('new-event', data.title, formattedTime, delete_event_at_end_of_day_toggle.checked, event_privacy_toggle.checked);
+  socket.emit('new-event', data.title, formattedTime, formattedEnd, delete_event_at_end_of_day_toggle.checked, event_privacy_toggle.checked);
   close_new_event_modal();
   this.reset();
 });
 
 
-socket.on('event-created-successfully', (event, eventId, time, isPrivate, deleteAtDayEnd) => {
-  addEventToList(event, eventId, time, isPrivate, false, deleteAtDayEnd);
+socket.on('event-created-successfully', (event, eventId, time, isPrivate, deleteAtDayEnd, endTime) => {
+  addEventToList(event, eventId, time, isPrivate, false, deleteAtDayEnd, endTime);
 });
 
 

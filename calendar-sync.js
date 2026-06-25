@@ -63,6 +63,14 @@ async function fetchTodayEvents(icalUrl) {
     // apples-to-apples regardless of where the server is running.
     const todayStr = getDateStr(new Date(), tz);
 
+    // Duration (ms) from the source event, used to derive each occurrence's
+    // end time. Null when the calendar omits DTEND (then we store no end time).
+    const startDate = new Date(evt.start);
+    const endDate = evt.end ? new Date(evt.end) : null;
+    const durationMs = (endDate && !isNaN(endDate.getTime()) && !isNaN(startDate.getTime()))
+      ? endDate.getTime() - startDate.getTime()
+      : null;
+
     if (evt.rrule) {
       // Recurring event: expand all occurrences in the 48-hour window,
       // then keep only those whose local date matches today.
@@ -73,6 +81,7 @@ async function fetchTodayEvents(icalUrl) {
           uid: `${evt.uid || key}_${d.getTime()}`,
           title: (evt.summary || 'Untitled').trim(),
           time: isAllDay ? '12:00 AM' : getTimeStr(d, tz),
+          endTime: (!isAllDay && durationMs != null) ? getTimeStr(new Date(d.getTime() + durationMs), tz) : null,
         });
       }
     } else {
@@ -88,6 +97,7 @@ async function fetchTodayEvents(icalUrl) {
           uid: evt.uid || key,
           title: (evt.summary || 'Untitled').trim(),
           time: '12:00 AM',
+          endTime: null,
         });
       } else {
         if (getDateStr(start, tz) !== todayStr) continue;
@@ -95,6 +105,7 @@ async function fetchTodayEvents(icalUrl) {
           uid: evt.uid || key,
           title: (evt.summary || 'Untitled').trim(),
           time: getTimeStr(start, tz),
+          endTime: (endDate && !isNaN(endDate.getTime())) ? getTimeStr(endDate, tz) : null,
         });
       }
     }
@@ -128,7 +139,7 @@ async function syncUserCalendars(userId, familyId, supabaseAdmin) {
   const ovMap = new Map();
   const { data: overrides } = await supabaseAdmin
     .from('external_event_overrides')
-    .select('external_calendar_id, external_id, action, title, time, is_private, delete_at_day_end')
+    .select('external_calendar_id, external_id, action, title, time, end_time, is_private, delete_at_day_end')
     .eq('user_id', userId);
   if (overrides) {
     for (const o of overrides) ovMap.set(`${o.external_calendar_id}::${o.external_id}`, o);
@@ -170,6 +181,7 @@ async function syncUserCalendars(userId, familyId, supabaseAdmin) {
       rows.push({
         title: edited && ov.title != null ? ov.title : evt.title,
         time: edited && ov.time != null ? ov.time : evt.time,
+        end_time: edited && ov.end_time != null ? ov.end_time : (evt.endTime || null),
         user_id: userId,
         family_id: familyId,
         is_private: edited && ov.is_private != null ? ov.is_private : calPrivate,

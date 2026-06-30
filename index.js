@@ -428,9 +428,9 @@ io.on("connection", function (socket) {
       console.error(error);
     } else {
       if (isPrivate) {
-        socket.emit('update-cards', title, description, socket.userId, socket.displayName, data[0].id, true, !!deleteAtEndOfDay);
+        socket.emit('update-cards', title, description, socket.userId, socket.displayName, data[0].id, true, !!deleteAtEndOfDay, data[0].created_at);
       } else {
-        io.to(socket.familyId).emit('update-cards', title, description, socket.userId, socket.displayName, data[0].id, false, !!deleteAtEndOfDay);
+        io.to(socket.familyId).emit('update-cards', title, description, socket.userId, socket.displayName, data[0].id, false, !!deleteAtEndOfDay, data[0].created_at);
       }
       socket.emit('card-created', data[0].id);
     }

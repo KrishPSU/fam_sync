@@ -16,6 +16,24 @@
   align-items: center;
 }
 
+/* "Created on" date, top-right of every card. margin-left:auto right-aligns it.
+   On the owner's cards it's followed by the 3-dots, so it isn't the last child
+   and gets a 10px gap before that button; on other cards it's last → no gap. */
+.card-date {
+  margin-left: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 0.72rem;
+  color: #999;
+}
+.card-date:not(:last-child) {
+  margin-right: 10px;
+}
+
+body.dark-mode .card-date {
+  color: #888;
+}
+
 .dots-button {
   background: none;
   border: none;
@@ -25,7 +43,8 @@
   line-height: 1;
   color: #555;
   transition: color 0.2s ease;
-  transform: translateY(-5px);
+  /* Nudge up 1px from the centered baseline to sit visually centred. */
+  transform: translateY(-1px);
   position: relative;
   z-index: 2;
 }

@@ -80,8 +80,8 @@ function editCard(cardId, title, description, isPrivate, deleteAtDayEnd) {
 }
 
 
-socket.on('update-cards', (title, description, ownerId, ownerName, cardId, isPrivate, deleteAtDayEnd) => {
-  addCardToList(title, description, ownerId, ownerName, cardId, [], isPrivate, deleteAtDayEnd, true);
+socket.on('update-cards', (title, description, ownerId, ownerName, cardId, isPrivate, deleteAtDayEnd, createdAt) => {
+  addCardToList(title, description, ownerId, ownerName, cardId, [], isPrivate, deleteAtDayEnd, true, createdAt);
 });
 
 

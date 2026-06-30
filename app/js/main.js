@@ -253,7 +253,16 @@ function addTaskToList(task, task_id, isComplete, isPrivate, deleteAtDayEnd = fa
 }
 
 
-function addCardToList(title, description, cardOwnerId, ownerName, cardId, files = [], isPrivate = false, deleteAtDayEnd = false, insertAtTop = false) {
+// Short "when this card was created" label for the card's top-right corner,
+// e.g. "Jun 30". Empty when there's no usable timestamp.
+function formatCardDate(createdAt) {
+  if (!createdAt) return '';
+  const d = new Date(createdAt);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function addCardToList(title, description, cardOwnerId, ownerName, cardId, files = [], isPrivate = false, deleteAtDayEnd = false, insertAtTop = false, createdAt = null) {
   if (files.length > 0) cardFilesMap[cardId] = files;
 
   const attachmentBtn = files.length > 0
@@ -264,6 +273,8 @@ function addCardToList(title, description, cardOwnerId, ownerName, cardId, files
     : '';
 
   const pill = (cardOwnerId == me && !isPrivate) ? '<span class="public-pill">Family</span>' : '';
+  const dateStr = formatCardDate(createdAt);
+  const dateHtml = dateStr ? `<span class="card-date">${dateStr}</span>` : '';
   const section_elem = document.createElement('section');
   let innerHtml;
 
@@ -275,6 +286,7 @@ function addCardToList(title, description, cardOwnerId, ownerName, cardId, files
             ${pill}
             <h2>${title}</h2>
           </div>
+          ${dateHtml}
           <button class="dots-button">⋯</button>
           <div class="dots-menu hidden">
             <button class="edit-btn">Edit</button>
@@ -290,7 +302,12 @@ function addCardToList(title, description, cardOwnerId, ownerName, cardId, files
   } else {
     innerHtml = `
       <section class="card" id="${cardId}">
-        <h2>${title} - ${ownerName || ''}</h2>
+        <div class="card-top">
+          <div class="card-top-left">
+            <h2>${title} - ${ownerName || ''}</h2>
+          </div>
+          ${dateHtml}
+        </div>
         <div class="card-content">
           <p>${description}</p>
           ${attachmentBtn}
@@ -343,7 +360,7 @@ socket.on('data-for-person', (events, tasks, cards, cardFiles) => {
       });
     }
     cards.forEach((card) => {
-      addCardToList(card.title, card.description, card.user_id, card.owner?.display_name, card.id, filesForCard[card.id] || [], card.is_private, card.delete_at_day_end);
+      addCardToList(card.title, card.description, card.user_id, card.owner?.display_name, card.id, filesForCard[card.id] || [], card.is_private, card.delete_at_day_end, false, card.created_at);
     });
   }
 });

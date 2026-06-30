@@ -28,7 +28,7 @@ Send a quick one-tap message to a specific family member or everyone at once. De
 Upload and share files through cards. View all family-shared files or just your own in a dual-tab layout. Supports download, metadata display, and the files are automatically indexed so the AI assistant can read them.
 
 ### AI Assistant
-Ask questions about your family's schedule, tasks, notes, or uploaded files in plain English. Powered by Llama 3.3 70B (via Groq) and scoped to only what you're authorized to see. It cites the specific items or files it references. Rate-limited to 20 requests per hour.
+Ask questions about your family's schedule, tasks, notes, settings, messages, or uploaded files in plain English. Powered by GPT-OSS 120B (via Groq) and scoped to only what you're authorized to see. It cites the specific items or files it references. Rate-limited to 20 requests per hour.
 
 ### Family Management
 Create a family or join one with an invite code. See all members with their display names and avatars. Manage settings and membership from a single panel.
@@ -46,7 +46,7 @@ Installable on iOS (Safari) and Android (Chrome) as a home screen app. Service w
 | Backend | Node.js, Express, Socket.IO |
 | Database | PostgreSQL via Supabase with Row-Level Security |
 | Auth | Google OAuth via Supabase |
-| AI | Groq SDK (Llama 3.3 70B) |
+| AI | Groq SDK (GPT-OSS 120B) |
 | Files | Multer, Supabase Storage, pdf-parse, mammoth |
 | Notifications | Web Push (VAPID), Service Workers |
 | Weather | National Weather Service API |

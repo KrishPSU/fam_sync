@@ -5,13 +5,17 @@
 const Groq = require('groq-sdk');
 
 const AI_PROVIDER = process.env.AI_PROVIDER || 'groq';
-const AI_MODEL    = process.env.AI_MODEL    || 'llama-3.3-70b-versatile';
+// llama-3.3-70b-versatile was deprecated on Groq (announced 2026-06-17); its
+// recommended production replacement is openai/gpt-oss-120b. Override with the
+// AI_MODEL env var if you migrate again.
+const AI_MODEL    = process.env.AI_MODEL    || 'openai/gpt-oss-120b';
 
 const MAX_PROMPT_LEN      = 2000;
 const HOURLY_CAP          = 20;          // AI requests per socket per rolling hour
 const REQUEST_TIMEOUT_MS  = 30000;
 const HISTORY_MAX_MESSAGES = 20;         // 10 user/assistant turns
-const MAX_CHUNKS          = 6;           // file chunks injected per question
+const MAX_CHUNKS          = 10;          // file chunks injected per question
+const MAX_MESSAGES        = 30;          // recent pings injected into context
 
 let groqClient = null;
 function getGroq() {
@@ -24,18 +28,32 @@ function getGroq() {
 // messages, returns { text, model, usage }.
 async function callModel(messages) {
   if (AI_PROVIDER !== 'groq') throw new Error(`Unsupported AI_PROVIDER: ${AI_PROVIDER}`);
-  const completion = await getGroq().chat.completions.create({
-    model: AI_MODEL,
-    messages,
-    temperature: 0.2,
-    max_tokens: 1024,
-  });
+  const params = { model: AI_MODEL, messages, temperature: 0.2 };
+  if (/gpt-oss/.test(AI_MODEL)) {
+    // gpt-oss is a reasoning model: use the newer token param and keep reasoning
+    // effort low for speed. Any chain-of-thought that lands in the reply is
+    // stripped below so the user only sees the final answer.
+    params.max_completion_tokens = 1024;
+    params.reasoning_effort = 'low';
+  } else {
+    params.max_tokens = 1024;
+  }
+  const completion = await getGroq().chat.completions.create(params);
   const choice = completion.choices && completion.choices[0];
   return {
-    text: (choice && choice.message && choice.message.content) || '',
+    text: stripReasoning((choice && choice.message && choice.message.content) || ''),
     model: completion.model || AI_MODEL,
     usage: completion.usage || null,
   };
+}
+
+// Some reasoning models emit their chain-of-thought inline in <think>…</think>
+// (or <reasoning>…</reasoning>) ahead of the answer. Drop it; keep the reply.
+function stripReasoning(text) {
+  return text
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')
+    .trim();
 }
 
 // ---- Retrieval -----------------------------------------------------------
@@ -48,30 +66,72 @@ function extractKeywords(question) {
     .slice(0, 8);
 }
 
-// Keyword-match the most relevant file chunks. RLS on ai_file_chunks restricts
-// this to chunks from cards the caller is allowed to see. Returns { chunks,
-// fileNames } where chunks carry their source file name for citation.
-async function retrieveFileChunks(sb, question) {
-  const keywords = extractKeywords(question);
-  if (keywords.length === 0) return { chunks: [], fileNames: [] };
+// Friendly label for an indexed file whose text we can't hand the model.
+function statusLabel(status) {
+  switch (status) {
+    case 'image':       return 'image — not text-readable';
+    case 'unsupported': return 'file type not supported for reading';
+    case 'pending':     return 'still being processed';
+    case 'error':       return 'could not be read';
+    default:            return status;
+  }
+}
 
-  const orFilter = keywords.map(k => `content.ilike.%${k}%`).join(',');
-  const { data: rows, error } = await sb
-    .from('ai_file_chunks')
-    .select('content, document_id')
-    .or(orFilter)
-    .limit(MAX_CHUNKS);
-  if (error || !rows || rows.length === 0) return { chunks: [], fileNames: [] };
-
-  // Resolve each chunk's source file name (for citations + context labelling).
-  const docIds = [...new Set(rows.map(r => r.document_id))];
-  const { data: docs } = await sb
+// Every indexed card-file the caller can see, with extraction status + name.
+// RLS on ai_file_documents scopes this to the caller's family + visible cards.
+// Used both to tell the model what files exist and to resolve chunk → file name.
+async function listFileDocuments(sb) {
+  const { data, error } = await sb
     .from('ai_file_documents')
-    .select('id, card_files(file_name)')
-    .in('id', docIds);
-  const nameByDoc = {};
-  (docs || []).forEach(d => { nameByDoc[d.id] = (d.card_files && d.card_files.file_name) || 'a file'; });
+    .select('id, status, card_files(file_name)');
+  if (error || !data) return [];
+  return data.map(d => ({
+    id: d.id,
+    fileName: (d.card_files && d.card_files.file_name) || 'a file',
+    status: d.status,
+  }));
+}
 
+// Pull the most relevant file chunks for a question. Two sources, combined up to
+// MAX_CHUNKS: (1) any document the user names directly in the question — all of
+// its chunks, so "summarize report.pdf" works even with no keyword hits; and
+// (2) keyword matches across everything. RLS on ai_file_chunks keeps this to
+// chunks the caller is allowed to see. `docs` comes from listFileDocuments().
+async function retrieveFileChunks(sb, question, docs) {
+  const nameByDoc = {};
+  docs.forEach(d => { nameByDoc[d.id] = d.fileName; });
+
+  const ql = question.toLowerCase();
+  const rows = [];
+  const seen = new Set(); // de-dupe identical chunk content across the two passes
+
+  // (1) Documents whose file name is mentioned in the question.
+  const mentionedDocIds = docs
+    .filter(d => d.fileName && d.fileName.length > 3 && ql.includes(d.fileName.toLowerCase()))
+    .map(d => d.id);
+  if (mentionedDocIds.length > 0) {
+    const { data } = await sb
+      .from('ai_file_chunks')
+      .select('content, document_id')
+      .in('document_id', mentionedDocIds)
+      .order('chunk_index', { ascending: true })
+      .limit(MAX_CHUNKS);
+    (data || []).forEach(r => { if (!seen.has(r.content)) { seen.add(r.content); rows.push(r); } });
+  }
+
+  // (2) Keyword matches to fill the remaining budget.
+  const keywords = extractKeywords(question);
+  if (rows.length < MAX_CHUNKS && keywords.length > 0) {
+    const orFilter = keywords.map(k => `content.ilike.%${k}%`).join(',');
+    const { data } = await sb
+      .from('ai_file_chunks')
+      .select('content, document_id')
+      .or(orFilter)
+      .limit(MAX_CHUNKS - rows.length);
+    (data || []).forEach(r => { if (!seen.has(r.content)) { seen.add(r.content); rows.push(r); } });
+  }
+
+  if (rows.length === 0) return { chunks: [], fileNames: [] };
   const chunks = rows.map(r => ({ fileName: nameByDoc[r.document_id] || 'a file', content: r.content }));
   const fileNames = [...new Set(chunks.map(c => c.fileName))];
   return { chunks, fileNames };
@@ -83,17 +143,22 @@ async function retrieveFileChunks(sb, question) {
 async function buildContext(socket, clientContext, question) {
   const sb = socket.userSupabase;
 
-  const [eventsRes, tasksRes, cardsRes, membersRes] = await Promise.all([
+  const [eventsRes, tasksRes, cardsRes, membersRes, messagesRes, familyRes] = await Promise.all([
     sb.from('events').select('title, time, is_private, user_id'),
     sb.from('tasks').select('title, complete, is_private, user_id'),
     sb.from('cards').select('id, title, description, is_private, user_id'),
     sb.from('profiles').select('id, display_name'),
+    // RLS scopes messages to the family + the pings this user is party to.
+    sb.from('messages').select('title, message, from_id, to_id').order('created_at', { ascending: false }).limit(MAX_MESSAGES),
+    sb.from('families').select('name').eq('id', socket.familyId).maybeSingle(),
   ]);
 
-  const events  = eventsRes.data  || [];
-  const tasks   = tasksRes.data   || [];
-  const cards   = cardsRes.data   || [];
-  const members = membersRes.data || [];
+  const events   = eventsRes.data   || [];
+  const tasks    = tasksRes.data    || [];
+  const cards    = cardsRes.data    || [];
+  const members  = membersRes.data  || [];
+  const messages = messagesRes.data || [];
+  const familyName = (familyRes.data && familyRes.data.name) || null;
   const nameById = {}; members.forEach(m => { nameById[m.id] = m.display_name; });
   const who = (uid) => (uid === socket.userId ? 'you' : (nameById[uid] || 'a family member'));
 
@@ -107,7 +172,9 @@ async function buildContext(socket, clientContext, question) {
   const filesByCard = {};
   files.forEach(f => { (filesByCard[f.card_id] = filesByCard[f.card_id] || []).push(f.file_name); });
 
-  const { chunks, fileNames } = await retrieveFileChunks(sb, question);
+  // Indexed-file documents (with extraction status) + the most relevant chunks.
+  const docs = await listFileDocuments(sb);
+  const { chunks, fileNames } = await retrieveFileChunks(sb, question, docs);
 
   // ---- Assemble a plain-text context block ----
   const lines = [];
@@ -116,6 +183,20 @@ async function buildContext(socket, clientContext, question) {
   if (ctx.timestamp) lines.push(`Current time: ${ctx.timestamp}${ctx.timezone ? ` (${ctx.timezone})` : ''}`);
   if (ctx.activePage) lines.push(`Screen the user is viewing: ${ctx.activePage}`);
   if (ctx.weatherText) lines.push(`Weather shown on the user's screen: ${ctx.weatherText}`);
+
+  lines.push('\nFAMILY:');
+  lines.push(`  Name: ${familyName || '(unnamed)'}`);
+  if (members.length > 0) {
+    lines.push(`  Members: ${members.map(m => (m.id === socket.userId ? `${m.display_name} (you)` : m.display_name)).join(', ')}`);
+  }
+
+  // The current user's own preferences (from their profile).
+  const s = socket.userSettings || {};
+  lines.push('\nYOUR SETTINGS (preferences for the current user):');
+  lines.push(`  - New items default to: ${s.default_is_private ? 'private (only you)' : 'shared with the family'}`);
+  lines.push(`  - New items auto-delete at end of day: ${s.default_delete_at_day_end ? 'yes' : 'no'}`);
+  lines.push(`  - Default landing tab: ${s.default_landing_tab || 'today'}`);
+  lines.push(`  - Weather location (ZIP): ${s.weather_zip || 'not set'}`);
 
   lines.push('\nEVENTS:');
   if (events.length === 0) lines.push('  (none)');
@@ -133,6 +214,21 @@ async function buildContext(socket, clientContext, question) {
     lines.push(`  - "${c.title}": ${c.description || ''}${attStr} (${who(c.user_id)}${c.is_private ? ', private' : ''})`);
   });
 
+  lines.push('\nMESSAGES (pings within the family, most recent first):');
+  if (messages.length === 0) lines.push('  (none)');
+  messages.forEach(m => {
+    const to = m.to_id ? who(m.to_id) : 'everyone';
+    lines.push(`  - ${who(m.from_id)} → ${to}: "${m.title}" — ${m.message}`);
+  });
+
+  // Files whose text we couldn't extract — so the model is honest about them
+  // instead of guessing at their contents.
+  const notReadable = docs.filter(d => d.status && d.status !== 'done');
+  if (notReadable.length > 0) {
+    lines.push('\nATTACHMENTS WHOSE TEXT IS NOT AVAILABLE:');
+    notReadable.forEach(d => lines.push(`  - ${d.fileName} (${statusLabel(d.status)})`));
+  }
+
   if (chunks.length > 0) {
     lines.push('\nRELEVANT FILE CONTENTS (extracted from attachments):');
     chunks.forEach(ch => lines.push(`  [from ${ch.fileName}] ${ch.content}`));
@@ -149,9 +245,11 @@ const SYSTEM_RULES = [
   'conversational, encouraging, and genuinely helpful.',
   '',
   'GROUNDING: Use the CONTEXT below as your source of FACTS about the family —',
-  'their events, tasks, cards, attached files, people, and the weather and time',
-  'currently on their screen. Never invent specific facts (titles, times, file',
-  'contents, names) that are not in the context.',
+  'their family name and members, the current user\'s settings, their events,',
+  'tasks, cards, attached files and file contents, the messages/pings they have',
+  'exchanged, and the weather and time currently on their screen. Never invent',
+  'specific facts (titles, times, file contents, names) that are not in the',
+  'context.',
   '',
   'REASONING: You are encouraged to think and give helpful suggestions that go',
   'beyond just repeating the data. Connect the dots. For example, if asked what',

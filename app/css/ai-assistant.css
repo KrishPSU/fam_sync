@@ -9,7 +9,9 @@
   border-left: 1px solid #e0e0e0;
   display: flex;
   flex-direction: column;
-  z-index: 10;
+  /* Above the app header (z-index: 200) so the Today header/content can't peek
+     over the panel, but below the account dropdown (500) and modals (1000). */
+  z-index: 300;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
   transform: translateX(0);
   transition: transform 0.3s ease;

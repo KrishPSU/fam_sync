@@ -64,6 +64,17 @@
       </div>
     </div>
 
+    <!-- First-launch invite to turn on notifications. It's a custom prompt
+         because iOS only allows the real permission request to fire from a user
+         tap — so "Enable" is what actually asks. Reuses the push-miss styling. -->
+    <div id="push-prompt-banner" class="push-miss-banner hidden" role="alert">
+      <span class="push-miss-text">Turn on notifications so you don't miss a ping from your family.</span>
+      <div class="push-miss-actions">
+        <button id="push-prompt-enable" class="push-miss-enable">Enable</button>
+        <button id="push-prompt-close" class="push-miss-close" aria-label="Dismiss">✕</button>
+      </div>
+    </div>
+
     <div id="no-family-banner" style="display:none; position:relative; margin:0.75rem; padding:0.85rem 2.5rem 0.85rem 1rem; border-radius:12px; background:#fff5e6; color:#8a5a00; border:1px solid #f0d9a8; font-size:0.92rem; text-align:center;">
       You're signed in, but not part of a family yet.
       <button id="banner-join-btn" style="margin-left:0.4rem; background:none; border:none; color:#8a5a00; font-size:0.92rem; font-weight:600; text-decoration:underline; cursor:pointer; padding:0;">Join / Create</button>

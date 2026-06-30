@@ -165,7 +165,12 @@ app.get('/env.js', function(req, res){
   res.send(
     `window.__ENV = ` + JSON.stringify({
       SUPABASE_URL: process.env.SUPABASE_URL,
-      SUPABASE_ANON_KEY: process.env.SUPABASE_KEY
+      SUPABASE_ANON_KEY: process.env.SUPABASE_KEY,
+      // Expose the push public key so the client subscribes with the exact key
+      // the server signs with — otherwise a drift between the two silently
+      // breaks every push notification (the browser subscribes fine, but the
+      // server's signature is rejected on send).
+      PUBLIC_VAPID_KEY: process.env.PUBLIC_VAPID_KEY
     }) + `;`
   );
 });
@@ -1035,7 +1040,11 @@ io.on("connection", function (socket) {
         if (err.statusCode === 404 || err.statusCode === 410) {
           await supabaseAdmin.from('push_subscriptions').delete().eq('endpoint', row.endpoint);
         } else {
-          console.error(err);
+          // 401/403 here almost always means the VAPID keys are mismatched or
+          // misconfigured (the device subscribed with a different public key
+          // than the server signs with) — surface the status to make that
+          // obvious instead of a generic dump.
+          console.error(`[push] send failed (status ${err.statusCode || '?'}):`, err.body || err.message);
         }
       }
     }));

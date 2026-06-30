@@ -1,6 +1,10 @@
 
 
-const VAPID_PUBLIC_KEY = 'BN6FDGyUdl1Or_EP1uWm-Wyt6L5Up2wvnBm6iFZKwgRV-Qd3g69KPQSMqVawOc_LSrvPi_4Ivhmrm4DJOMQHoLs';
+// Prefer the key the server hands us via /env.js (guaranteed to match the key
+// the server signs pushes with); fall back to the baked-in key so nothing
+// breaks if PUBLIC_VAPID_KEY isn't set in the environment.
+const VAPID_PUBLIC_KEY = (window.__ENV && window.__ENV.PUBLIC_VAPID_KEY)
+  || 'BN6FDGyUdl1Or_EP1uWm-Wyt6L5Up2wvnBm6iFZKwgRV-Qd3g69KPQSMqVawOc_LSrvPi_4Ivhmrm4DJOMQHoLs';
 
 const members_dropdown = document.getElementById('member');
 const ping_form = document.getElementById('pingForm');
@@ -60,6 +64,50 @@ async function ensurePushSubscribed() {
   } finally {
     pushSubscribeInFlight = false;
   }
+}
+
+// ---- First-launch notification prompt -----------------------------------
+// Shown once on launch to invite the user to enable push, instead of waiting
+// for them to open the Ping tab. The actual permission request still happens on
+// the "Enable" tap (iOS requires a user gesture). Dismissals are remembered so
+// we don't nag — the missed-ping nudge still covers them if a ping later fails.
+const PUSH_PROMPT_DISMISSED_KEY = 'famsync-push-prompt-dismissed';
+const push_prompt_banner = document.getElementById('push-prompt-banner');
+
+function hidePushPrompt() {
+  if (push_prompt_banner) push_prompt_banner.classList.add('hidden');
+}
+
+// Called once per launch (from main.js, after sign-in). Refreshes an existing
+// subscription, or invites a first-time user to enable notifications.
+function initPushOnLaunch() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+
+  if (Notification.permission === 'granted') {
+    ensurePushSubscribed(); // heal a possibly iOS-invalidated subscription
+    return;
+  }
+  if (Notification.permission !== 'default') return; // 'denied' — can't prompt
+
+  if (localStorage.getItem(PUSH_PROMPT_DISMISSED_KEY)) return;
+  // Don't stack on top of the (more specific) missed-ping nudge if it's up.
+  const miss = document.getElementById('push-miss-banner');
+  if (miss && !miss.classList.contains('hidden')) return;
+  if (push_prompt_banner) push_prompt_banner.classList.remove('hidden');
+}
+
+if (push_prompt_banner) {
+  document.getElementById('push-prompt-enable').addEventListener('click', async () => {
+    await ensurePushSubscribed();
+    hidePushPrompt();
+    // Remember the decision either way so the first-launch prompt won't reappear;
+    // if it didn't take, a missed ping will re-nudge later.
+    localStorage.setItem(PUSH_PROMPT_DISMISSED_KEY, '1');
+  });
+  document.getElementById('push-prompt-close').addEventListener('click', () => {
+    hidePushPrompt();
+    localStorage.setItem(PUSH_PROMPT_DISMISSED_KEY, '1');
+  });
 }
 
 document.getElementById('ping-submit-btn').addEventListener('click', (e) => {
@@ -128,6 +176,7 @@ const push_miss_text = push_miss_banner ? push_miss_banner.querySelector('.push-
 
 function showPushMissBanner({ count = 1, from } = {}) {
   if (!push_miss_banner) return;
+  hidePushPrompt(); // the generic first-launch prompt defers to this one
   push_miss_text.innerText = from
     ? `${uppercaseFirstLetter(from)} pinged you, but notifications are off so it didn’t pop up. Enable them so you don’t miss the next one.`
     : `You have ${count} ping${count > 1 ? 's' : ''} that didn’t pop up because notifications are off. Enable them so you don’t miss any.`;

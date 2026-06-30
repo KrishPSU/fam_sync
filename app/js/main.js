@@ -26,13 +26,13 @@ closeAiBtn.addEventListener('click', () => {
 
 let me;            // current user's UUID
 let myDisplayName; // current user's Google display name
+let appStarted = false;
 
-window.addEventListener('load', async () => {
-  const session = await getSession();
-  if (!session) {
-    window.location.href = '/signin';
-    return;
-  }
+// Bring the app online once we have a confirmed session. Idempotent: the auth
+// listener below can fire more than once (initial load, sign-in, restore).
+function startApp(session) {
+  if (appStarted) return;
+  appStarted = true;
 
   me = session.user.id;
   myDisplayName = session.user.user_metadata?.full_name || session.user.email;
@@ -59,15 +59,60 @@ window.addEventListener('load', async () => {
   socket.auth = { token: session.access_token };
   socket.connect();
 
-  // Keep the socket's token fresh when supabase-js rotates it (~hourly).
-  _supabase.auth.onAuthStateChange((event, newSession) => {
-    if (event === 'TOKEN_REFRESHED' && newSession) {
-      socket.auth = { token: newSession.access_token };
-      socket.disconnect().connect();
+  requestTodayData();
+
+  // On every launch: if notifications are already granted, silently refresh the
+  // saved push subscription (iOS quietly invalidates them, which is the usual
+  // reason pings stop arriving); if this is a first-time user, show a one-time
+  // prompt inviting them to turn notifications on.
+  if (typeof initPushOnLaunch === 'function') initPushOnLaunch();
+}
+
+window.addEventListener('load', () => {
+  // Single source of truth for auth state. We deliberately do NOT redirect on a
+  // one-shot getSession() === null: on a cold PWA launch or a network blip (e.g.
+  // right after the server restarts) supabase-js can momentarily lack a session
+  // before it restores/refreshes it from storage — that race is what bounced the
+  // app to /signin and straight back (the sign-out/sign-in flicker). Gating on
+  // the auth events fixes it: INITIAL_SESSION fires once the client has settled,
+  // and SIGNED_OUT only fires on a real sign-out or a truly-expired refresh token.
+  _supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'INITIAL_SESSION') {
+      if (session) startApp(session);
+      else window.location.href = '/signin';
+    } else if (event === 'SIGNED_IN') {
+      if (session) startApp(session);
+    } else if (event === 'TOKEN_REFRESHED') {
+      if (session) {
+        socket.auth = { token: session.access_token };
+        if (socket.connected) socket.disconnect();
+        socket.connect();
+      }
+    } else if (event === 'SIGNED_OUT') {
+      window.location.href = '/signin';
     }
   });
 
-  requestTodayData();
+  // Safety net: if the auth event never arrives (older supabase-js, etc.), boot
+  // from the stored session anyway. Never redirects here — that would risk
+  // re-introducing the flicker; the INITIAL_SESSION path already handles "no
+  // session" once the client has settled.
+  setTimeout(async () => {
+    if (!appStarted) {
+      const session = await getSession();
+      if (session) startApp(session);
+    }
+  }, 2500);
+});
+
+// When the server comes back after a restart, socket.io auto-reconnects using
+// the token we last set. If that token lapsed while the server was down the
+// handshake is rejected and the client would otherwise keep retrying with the
+// dead token forever; refresh it so the next retry succeeds (no re-login, no
+// page reload). getSession() returns a refreshed token when the old one expired.
+socket.on('connect_error', async () => {
+  const session = await getSession();
+  if (session) socket.auth = { token: session.access_token };
 });
 
 // Account dropdown: toggle on avatar click, close when clicking elsewhere.

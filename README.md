@@ -1,5 +1,7 @@
 # FamSync
 
+### 👉 Try it live: [www.famsyncapp.com](https://www.famsyncapp.com/)
+
 A real-time family organizer that keeps everyone on the same page — events, tasks, notes, files, and quick messages, all synced the moment something changes.
 
 ---
@@ -16,10 +18,10 @@ Keeping a family coordinated across different schedules and devices is messy. Te
 Your daily home base. See all of today's events with times, a task checklist, quick notes/cards, and a live local weather forecast pulled from the National Weather Service.
 
 ### Tasks & Events
-Create events with specific times or tasks with checkboxes. Mark items as private (visible only to you) or shared with the whole family. Everything syncs instantly across all connected devices.
+Create events with specific times or tasks with checkboxes. Mark items as private (visible only to you) or shared with the whole family — shared items carry a "Family" pill so you can see at a glance what everyone can see. Everything syncs instantly across all connected devices.
 
 ### Cards / Notes
-Free-form note cards for anything that doesn't fit a task or event — shopping lists, reminders, ideas. Cards support file attachments (PDFs, Word docs, images, and more).
+Free-form note cards for anything that doesn't fit a task or event — shopping lists, reminders, ideas. Each card shows who created it and the date it was created. Cards support file attachments (PDFs, Word docs, images, and more).
 
 ### Pings
 Send a quick one-tap message to a specific family member or everyone at once. Delivered as a web push notification even when they have the app closed. A fallback in-app banner handles cases where push delivery fails. Includes a full sent/received message history.
@@ -34,7 +36,7 @@ Ask questions about your family's schedule, tasks, notes, settings, messages, or
 Create a family or join one with an invite code. See all members with their display names and avatars. Manage settings and membership from a single panel.
 
 ### PWA — Works Like a Native App
-Installable on iOS (Safari) and Android (Chrome) as a home screen app. Service workers handle push notifications and offline-ready behavior.
+Installable on iOS (Safari) and Android (Chrome) as a home screen app. Service workers handle push notifications and offline-ready behavior. You stay signed in across launches (no re-login on every open), and a one-time prompt on first launch makes it easy to turn on notifications.
 
 ---
 

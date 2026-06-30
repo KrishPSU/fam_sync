@@ -254,12 +254,15 @@ function addTaskToList(task, task_id, isComplete, isPrivate, deleteAtDayEnd = fa
 
 
 // Short "when this card was created" label for the card's top-right corner,
-// e.g. "Jun 30". Empty when there's no usable timestamp.
+// e.g. "Jun 30" — or "Jun 30, 2024" when the card is from a different year than
+// the current one. Empty when there's no usable timestamp.
 function formatCardDate(createdAt) {
   if (!createdAt) return '';
   const d = new Date(createdAt);
   if (isNaN(d.getTime())) return '';
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const opts = { month: 'short', day: 'numeric' };
+  if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+  return d.toLocaleDateString(undefined, opts);
 }
 
 function addCardToList(title, description, cardOwnerId, ownerName, cardId, files = [], isPrivate = false, deleteAtDayEnd = false, insertAtTop = false, createdAt = null) {

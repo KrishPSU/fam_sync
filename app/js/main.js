@@ -147,11 +147,35 @@ const ITEM_ACTIONS_HTML =
      <button class="delete-btn" title="Delete" aria-label="Delete">✕</button>
    </div>`;
 
+// "Family" pill markup for the user's own non-private tasks/events, so they can
+// see at a glance that their family can see the item. Empty when private.
+function visibilityPillHTML(isPrivate) {
+  return isPrivate ? '' : '<span class="public-pill">Family</span>';
+}
+
+// Add or remove the "Family" pill inside `container` to match `isPrivate`,
+// inserting it before `beforeEl` when added. Called when a task/event's privacy
+// is toggled from its edit modal.
+function syncVisibilityPill(container, beforeEl, isPrivate) {
+  const existing = container.querySelector('.public-pill');
+  if (isPrivate) {
+    if (existing) existing.remove();
+  } else if (!existing) {
+    const pill = document.createElement('span');
+    pill.className = 'public-pill';
+    pill.textContent = 'Family';
+    container.insertBefore(pill, beforeEl);
+  }
+}
+
 function addEventToList(event, event_id, time, isPrivate, isExternal, deleteAtDayEnd = false, endTime = '') {
   const li_elem = document.createElement('li');
   li_elem.classList.add("event-item");
   li_elem.innerHTML = `
-    <span><strong>${formatEventTimeLabel(time, endTime)}</strong> — ${event}</span>
+    <div class="event-main">
+      ${visibilityPillHTML(isPrivate)}
+      <span class="event-text"><strong>${formatEventTimeLabel(time, endTime)}</strong> — ${event}</span>
+    </div>
     ${ITEM_ACTIONS_HTML}
   `;
   li_elem.id = event_id;
@@ -174,6 +198,7 @@ function addTaskToList(task, task_id, isComplete, isPrivate, deleteAtDayEnd = fa
           <input type="checkbox" id="cb-${task_id}"${checkedAttr} />
           <label for="cb-${task_id}"></label>
         </div>
+        ${visibilityPillHTML(isPrivate)}
         <span class="task-text">${task}</span>
       </div>
       ${ITEM_ACTIONS_HTML}

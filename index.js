@@ -234,7 +234,9 @@ app.get('/api/cleanup', async (req, res) => {
   }
 
   try {
-    const deleteTables = ['tasks', 'events', 'cards', 'messages'];
+    // Tasks/events/cards carry a per-item "delete at end of day" flag — only the
+    // rows that opted in get cleared.
+    const deleteTables = ['tasks', 'events', 'cards'];
 
     for (const table of deleteTables) {
       // Admin client bypasses RLS — this is a trusted cron gated by CRON_SECRET_KEY.
@@ -246,6 +248,24 @@ app.get('/api/cleanup', async (req, res) => {
       if (error) {
         console.error(`❌ Error deleting ${table}:`, error.message);
         return res.status(500).send(`Error deleting ${table}`);
+      }
+    }
+
+    // Pings are ephemeral notifications with no per-item flag, so they're cleared
+    // wholesale each day. (The messages table has no delete_at_day_end column —
+    // which is why it can't go through the loop above; the bad filter there left
+    // pings undeleted.) from_id is NOT NULL on every row, so .not(...is null) is a
+    // match-all — Supabase requires a filter on delete to guard against an
+    // accidental full-table wipe.
+    {
+      const { error } = await supabaseAdmin
+        .from('messages')
+        .delete()
+        .not('from_id', 'is', null);
+
+      if (error) {
+        console.error('❌ Error deleting messages:', error.message);
+        return res.status(500).send('Error deleting messages');
       }
     }
 
@@ -409,6 +429,25 @@ io.on("connection", function (socket) {
       }
       socket.emit('card-created', data[0].id);
     }
+  });
+
+
+  // Card attachments are uploaded over HTTP *after* the new-card broadcast, so
+  // the rest of the family rendered the card without its files pill. Once the
+  // owner finishes uploading they fire this; we read the files back from the DB
+  // (authoritative, rather than trusting the client) and push them to the family
+  // so they can show the pill on the card they already have.
+  socket.on('card-files-attached', async (cardId) => {
+    if (!socket.familyId || !cardId) return;
+    const { data: card } = await socket.userSupabase
+      .from('cards')
+      .select('user_id, is_private')
+      .eq('id', cardId)
+      .single();
+    if (!card || card.user_id !== socket.userId || card.is_private) return;
+    const files = await getCardFiles([cardId]);
+    if (files.length === 0) return;
+    socket.to(socket.familyId).emit('card-files-updated', cardId, files);
   });
 
 

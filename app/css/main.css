@@ -533,6 +533,24 @@ body.dark-mode .round input[type="checkbox"]:checked + label {
   padding: 6px 0;
 }
 
+/* Pill + event text grouped on the left, so the action buttons stay right. */
+.event-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* The pill's margins are tuned for the card header; reset them here so it sits
+   centered in the single-line task/event rows and spacing comes from the flex
+   gap. */
+.task .public-pill,
+.event-main .public-pill {
+  margin-top: 0;
+  margin-right: 0;
+}
+
 /* Inline edit + delete controls on task/event rows (edit on the left,
    delete on the right). */
 .item-actions {

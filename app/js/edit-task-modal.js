@@ -52,7 +52,9 @@ edit_task_form.addEventListener('submit', function (e) {
   const taskElem = document.getElementById(currentTaskBeingEditedId);
   if (taskElem) {
     const item = taskElem.closest('.task-item');
-    taskElem.querySelector('.task-text').innerText = title;
+    const textEl = taskElem.querySelector('.task-text');
+    textEl.innerText = title;
+    syncVisibilityPill(taskElem, textEl, isPrivate);
     item.dataset.isPrivate = isPrivate;
     item.dataset.deleteAtDayEnd = deleteAtDayEnd;
   }

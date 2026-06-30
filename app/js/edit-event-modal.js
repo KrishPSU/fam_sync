@@ -71,8 +71,10 @@ edit_event_form.addEventListener('submit', function (e) {
 
   const item = document.getElementById(currentEventBeingEditedId);
   if (item) {
-    const span = item.querySelector('span');
-    if (span) span.innerHTML = `<strong>${formatEventTimeLabel(formattedTime, formattedEnd)}</strong> — ${title}`;
+    const textEl = item.querySelector('.event-text');
+    if (textEl) textEl.innerHTML = `<strong>${formatEventTimeLabel(formattedTime, formattedEnd)}</strong> — ${title}`;
+    const main = item.querySelector('.event-main');
+    if (main && textEl) syncVisibilityPill(main, textEl, isPrivate);
     item.dataset.title = title;
     item.dataset.time = formattedTime;
     item.dataset.endTime = formattedEnd;

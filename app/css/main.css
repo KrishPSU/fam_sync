@@ -265,9 +265,34 @@ header h1 {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-#my-events {
+/* Both Today lists are capped scroll containers so long lists scroll in place
+   (and so the scroll shadows below have something to react to). */
+#my-events,
+#my-tasks {
   max-height: 140px;
   overflow-y: auto;
+}
+
+/* Scroll fade. When a list has clipped content, its top/bottom edge dissolves to
+   transparent so it's clear there's more to scroll. A mask fades the content
+   itself — no shadow band behind the transparent rows, nothing lopsided around
+   the scrollbar. scroll-shadow.js toggles the has-top-fade / has-bottom-fade
+   classes; each edge color flips between #000 (fully visible) and transparent
+   (faded). Both are black so they interpolate with no color shift. */
+#my-events,
+#my-tasks {
+  --fade-top: #000;     /* opaque = no fade until there's content above */
+  --fade-bottom: #000;  /* opaque = no fade until there's content below */
+  -webkit-mask-image: linear-gradient(to bottom, var(--fade-top), #000 16px, #000 calc(100% - 16px), var(--fade-bottom));
+          mask-image: linear-gradient(to bottom, var(--fade-top), #000 16px, #000 calc(100% - 16px), var(--fade-bottom));
+}
+#my-events.has-top-fade,
+#my-tasks.has-top-fade {
+  --fade-top: transparent;
+}
+#my-events.has-bottom-fade,
+#my-tasks.has-bottom-fade {
+  --fade-bottom: transparent;
 }
 
 .card-top {

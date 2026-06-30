@@ -76,6 +76,9 @@ function collectClientContext() {
   return {
     weatherText,
     activePage: activeBtn ? activeBtn.textContent.trim() : '',
+    // Dark mode is a device preference (localStorage), so the server can't see
+    // it — send it here so the assistant can answer "is dark mode on?".
+    darkMode: document.body.classList.contains('dark-mode'),
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     timestamp: new Date().toISOString(),
   };

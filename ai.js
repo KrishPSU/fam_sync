@@ -119,16 +119,25 @@ async function retrieveFileChunks(sb, question, docs) {
     (data || []).forEach(r => { if (!seen.has(r.content)) { seen.add(r.content); rows.push(r); } });
   }
 
-  // (2) Keyword matches to fill the remaining budget.
+  // (2) Keyword matches to fill the remaining budget. ilike matches substrings,
+  // so "mode" also hits "model"/"moderate" and drags in unrelated files; we
+  // over-fetch, then keep only chunks where a keyword appears as a whole word.
   const keywords = extractKeywords(question);
   if (rows.length < MAX_CHUNKS && keywords.length > 0) {
     const orFilter = keywords.map(k => `content.ilike.%${k}%`).join(',');
+    const need = MAX_CHUNKS - rows.length;
     const { data } = await sb
       .from('ai_file_chunks')
       .select('content, document_id')
       .or(orFilter)
-      .limit(MAX_CHUNKS - rows.length);
-    (data || []).forEach(r => { if (!seen.has(r.content)) { seen.add(r.content); rows.push(r); } });
+      .limit(need * 4);
+    const wordRes = keywords.map(k => new RegExp(`\\b${k}\\b`, 'i'));
+    (data || []).forEach(r => {
+      if (rows.length >= MAX_CHUNKS) return;
+      if (seen.has(r.content)) return;
+      if (!wordRes.some(re => re.test(r.content))) return; // substring-only hit
+      seen.add(r.content); rows.push(r);
+    });
   }
 
   if (rows.length === 0) return { chunks: [], fileNames: [] };
@@ -197,6 +206,8 @@ async function buildContext(socket, clientContext, question) {
   lines.push(`  - New items auto-delete at end of day: ${s.default_delete_at_day_end ? 'yes' : 'no'}`);
   lines.push(`  - Default landing tab: ${s.default_landing_tab || 'today'}`);
   lines.push(`  - Weather location (ZIP): ${s.weather_zip || 'not set'}`);
+  // Dark mode lives on the device, so it arrives via clientContext, not the DB.
+  if (typeof ctx.darkMode === 'boolean') lines.push(`  - Dark mode: ${ctx.darkMode ? 'on' : 'off'}`);
 
   lines.push('\nEVENTS:');
   if (events.length === 0) lines.push('  (none)');
@@ -234,8 +245,19 @@ async function buildContext(socket, clientContext, question) {
     chunks.forEach(ch => lines.push(`  [from ${ch.fileName}] ${ch.content}`));
   }
 
-  const citations = fileNames.map(name => ({ type: 'file', name }));
-  return { contextBlock: lines.join('\n'), citations };
+  // Return the candidate file names; the caller decides which to actually cite
+  // (only files the model names in its answer) so retrieved-but-unused chunks
+  // don't produce stray "Sources" lines.
+  return { contextBlock: lines.join('\n'), fileNames };
+}
+
+// A file is worth citing only if the model actually referenced it in its answer
+// — by full name or by its name without the extension.
+function answerMentionsFile(answer, fileName) {
+  const a = answer.toLowerCase();
+  const full = fileName.toLowerCase();
+  const base = full.replace(/\.[a-z0-9]+$/, '');
+  return a.includes(full) || (base.length > 3 && a.includes(base));
 }
 
 // ---- Prompt builder ------------------------------------------------------
@@ -327,7 +349,7 @@ function registerAiHandlers(io, socket) {
     socket._aiCount += 1;
 
     try {
-      const { contextBlock, citations } = await buildContext(socket, clientContext, message);
+      const { contextBlock, fileNames } = await buildContext(socket, clientContext, message);
       socket._aiHistory = socket._aiHistory || [];
       const messages = buildMessages(contextBlock, socket._aiHistory, message);
 
@@ -339,6 +361,9 @@ function registerAiHandlers(io, socket) {
       if (socket._aiHistory.length > HISTORY_MAX_MESSAGES)
         socket._aiHistory = socket._aiHistory.slice(-HISTORY_MAX_MESSAGES);
 
+      const citations = fileNames
+        .filter(name => answerMentionsFile(answer, name))
+        .map(name => ({ type: 'file', name }));
       socket.emit('ai:answer', { answer, citations, model: result.model });
     } catch (err) {
       const errorCode = (err && err.status === 429) ? 'rate_limit'

@@ -21,12 +21,19 @@ attach_file_btn.addEventListener('click', () => {
   card_file_input.click();
 });
 
-card_file_input.addEventListener('change', function() {
+card_file_input.addEventListener('change', async function() {
   if (this.files && this.files.length > 0) {
-    pendingFilesUpload = Array.from(this.files);
-    attached_file_name.textContent = this.files.length === 1
-      ? this.files[0].name
-      : `${this.files.length} files selected`;
+    const picked = Array.from(this.files);
+    attached_file_name.textContent = picked.length === 1
+      ? picked[0].name
+      : `${picked.length} files selected`;
+    // Copy the selected files into memory-backed File objects right away. On
+    // iOS Safari, File references taken from an <input> are invalidated when the
+    // input/form is reset — which happens on submit, BEFORE the deferred upload
+    // runs (the upload waits for the server's card-created round-trip). Reading
+    // the bytes now detaches them from the input so the upload still has a body.
+    pendingFilesUpload = await Promise.all(picked.map(async (f) =>
+      new File([await f.arrayBuffer()], f.name, { type: f.type })));
   } else {
     pendingFilesUpload = [];
     attached_file_name.textContent = '';
@@ -75,6 +82,7 @@ socket.on('card-created', async (cardId) => {
   }
 
   const uploadedFiles = [];
+  let anyFailed = false;
 
   await Promise.all(filesToUpload.map(async (file) => {
     const formData = new FormData();
@@ -92,14 +100,22 @@ socket.on('card-created', async (cardId) => {
         const data = await res.json();
         uploadedFiles.push({ id: data.id, card_id: cardId, file_name: data.fileName });
       } else {
+        anyFailed = true;
         console.error('File upload failed:', await res.text());
       }
     } catch (err) {
+      anyFailed = true;
       console.error('File upload error:', err);
     }
   }));
 
   if (loadingBtn) loadingBtn.remove();
+
+  // Don't fail silently — otherwise the "Uploading…" pill just disappears and the
+  // user has no idea their attachments were dropped.
+  if (anyFailed) {
+    alert("Some attachments couldn't be uploaded. Open the card's menu → Edit to try adding them again.");
+  }
 
   if (uploadedFiles.length === 0) return;
 

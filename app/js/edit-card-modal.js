@@ -155,7 +155,7 @@ async function applyStagedFileChanges(cardId, original, kept, newFiles) {
       });
       if (res.ok) {
         const d = await res.json();
-        uploaded.push({ id: d.id, card_id: cardId, file_name: d.fileName, file_url: d.url });
+        uploaded.push({ id: d.id, card_id: cardId, file_name: d.fileName });
       } else {
         console.error('File upload failed:', await res.text());
       }

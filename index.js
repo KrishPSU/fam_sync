@@ -66,10 +66,12 @@ app.use(
     directives: {
       defaultSrc: ["'self'"],
       connectSrc: ["'self'", "https://api.weather.gov", "https://geocoding.geo.census.gov", supabaseOrigin, "https://cdn.jsdelivr.net"],
-      imgSrc: ["'self'", "data:", "https://img.icons8.com", supabaseOrigin, "https://*.googleusercontent.com"],
+      // Attachments are fetched with auth and rendered as same-origin blob URLs,
+      // so they no longer load from Supabase — only "blob:" is needed here.
+      imgSrc: ["'self'", "data:", "blob:", "https://img.icons8.com", "https://*.googleusercontent.com"],
       scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      frameSrc: [supabaseOrigin],
+      frameSrc: ["'self'", "blob:"],
     },
   })
 );
@@ -119,17 +121,16 @@ app.post('/api/upload-card-file', upload.single('file'), async (req, res) => {
     return res.status(500).json({ error: 'Upload failed' });
   }
 
-  const { data: urlData } = supabaseAdmin.storage
-    .from('card-attachments')
-    .getPublicUrl(filePath);
-
+  // No public URL is stored — the bucket is private and files are served through
+  // the authenticated /api/card-file/:id proxy. file_url is kept null (the column
+  // remains for backward compatibility but is unused).
   const { data: fileRow, error: dbError } = await supabaseAdmin
     .from('card_files')
     .insert({
       card_id: cardId,
       file_name: file.originalname,
       file_path: filePath,
-      file_url: urlData.publicUrl,
+      file_url: null,
       uploader_id: user.id,
       family_id: card.family_id
     })
@@ -146,7 +147,64 @@ app.post('/api/upload-card-file', upload.single('file'), async (req, res) => {
   // document row by the indexer itself.
   indexCardFile(supabaseAdmin, fileRow).catch(() => {});
 
-  res.json({ success: true, id: fileRow.id, url: urlData.publicUrl, fileName: file.originalname });
+  res.json({ success: true, id: fileRow.id, fileName: file.originalname });
+});
+
+
+
+// Serve a card attachment through our own domain so the file is never a public
+// Supabase URL (the bucket is private). Access is gated here: the card's owner
+// always, plus other current members of the card's family for non-private cards.
+// <img>/<iframe> can't send an auth header, so the client fetches this with the
+// JWT and renders the bytes as a same-origin blob URL.
+app.get('/api/card-file/:id', async (req, res) => {
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  const user = await verifyToken(token);
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const { data: fileRow } = await supabaseAdmin
+    .from('card_files')
+    .select('file_path, file_name, card_id')
+    .eq('id', req.params.id)
+    .single();
+  if (!fileRow) return res.status(404).json({ error: 'Not found' });
+
+  const { data: card } = await supabaseAdmin
+    .from('cards')
+    .select('user_id, is_private, family_id')
+    .eq('id', fileRow.card_id)
+    .single();
+  if (!card) return res.status(404).json({ error: 'Not found' });
+
+  // Owner can always view. Otherwise the card must be shared (not private) and
+  // the requester must be a current member of the card's family.
+  let allowed = card.user_id === user.id;
+  if (!allowed && !card.is_private && card.family_id) {
+    const { data: membership } = await supabaseAdmin
+      .from('family_members')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .eq('family_id', card.family_id)
+      .is('left_at', null)
+      .maybeSingle();
+    allowed = !!membership;
+  }
+  if (!allowed) return res.status(403).json({ error: 'Forbidden' });
+
+  const { data: blob, error: dlError } = await supabaseAdmin.storage
+    .from('card-attachments')
+    .download(fileRow.file_path);
+  if (dlError || !blob) {
+    console.error('Storage download error:', dlError);
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  const buffer = Buffer.from(await blob.arrayBuffer());
+  const safeName = (fileRow.file_name || 'file').replace(/"/g, '');
+  res.setHeader('Content-Type', blob.type || 'application/octet-stream');
+  res.setHeader('Content-Disposition', `inline; filename="${safeName}"`);
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  res.send(buffer);
 });
 
 

@@ -90,7 +90,7 @@ socket.on('card-created', async (cardId) => {
       });
       if (res.ok) {
         const data = await res.json();
-        uploadedFiles.push({ id: data.id, card_id: cardId, file_name: data.fileName, file_url: data.url });
+        uploadedFiles.push({ id: data.id, card_id: cardId, file_name: data.fileName });
       } else {
         console.error('File upload failed:', await res.text());
       }

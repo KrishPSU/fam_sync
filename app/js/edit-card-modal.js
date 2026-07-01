@@ -68,15 +68,9 @@ edit_attach_file_btn.addEventListener('click', () => {
   edit_card_file_input.click();
 });
 
-edit_card_file_input.addEventListener('change', async function() {
+edit_card_file_input.addEventListener('change', function() {
   if (this.files && this.files.length > 0) {
-    // Detach the picks into memory-backed File objects immediately. On iOS
-    // Safari, input-backed File refs are invalidated when the input is cleared
-    // (below, to allow re-picking) or the form is reset on Save — both happen
-    // before the deferred upload runs. See create-card-modal.js for detail.
-    const copies = await Promise.all(Array.from(this.files).map(async (f) =>
-      new File([await f.arrayBuffer()], f.name, { type: f.type })));
-    editNewFiles.push(...copies);
+    editNewFiles.push(...Array.from(this.files));
     renderEditFilesList();
   }
   this.value = ''; // allow re-picking the same file

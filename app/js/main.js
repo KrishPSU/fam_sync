@@ -265,6 +265,35 @@ function formatCardDate(createdAt) {
   return d.toLocaleDateString(undefined, opts);
 }
 
+// Paperclip + "N file(s)" markup shared by every place that draws a card's
+// attachment pill.
+function cardAttachmentPillHTML(count) {
+  return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+    ${count} file${count !== 1 ? 's' : ''}`;
+}
+
+// Add, update, or remove a card's attachment pill to match `files`. Removes the
+// pill when there are no files; creates it (in .card-content) when there are.
+function updateCardFilesPill(cardId, files) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  const content = card.querySelector('.card-content');
+  if (!content) return;
+
+  let btn = content.querySelector('.card-attachment-btn');
+  if (!files || files.length === 0) {
+    if (btn) btn.remove();
+    return;
+  }
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.className = 'card-attachment-btn';
+    content.appendChild(btn);
+  }
+  btn.dataset.cardId = cardId;
+  btn.innerHTML = cardAttachmentPillHTML(files.length);
+}
+
 function addCardToList(title, description, cardOwnerId, ownerName, cardId, files = [], isPrivate = false, deleteAtDayEnd = false, insertAtTop = false, createdAt = null) {
   if (files.length > 0) cardFilesMap[cardId] = files;
 

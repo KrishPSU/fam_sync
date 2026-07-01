@@ -63,6 +63,9 @@ function editCard(cardId, title, description, isPrivate, deleteAtDayEnd) {
   card.dataset.isPrivate = isPrivate;
   card.dataset.deleteAtDayEnd = deleteAtDayEnd;
 
+  const dateElem = card.querySelector('.card-date');
+  if (dateElem) dateElem.textContent = formatCardDate(new Date().toISOString());
+
   const topLeft = card.querySelector('.card-top-left');
   if (topLeft) {
     let existingPill = topLeft.querySelector('.public-pill');
@@ -90,27 +93,13 @@ socket.on('card-deletion', (cardId) => {
 });
 
 
-// Files are uploaded after a card is first broadcast, so a card someone else
-// made arrives without its files pill. This fills it in once the owner's
-// uploads land — and stores the files so clicking the pill opens the viewer.
+// Files are uploaded/removed after a card is first broadcast, so a card someone
+// else made can arrive without (or later change) its files pill. This keeps the
+// stored files and the pill in sync — adding it when files land, and removing it
+// when the owner deletes the last one.
 socket.on('card-files-updated', (cardId, files) => {
-  if (!files || files.length === 0) return;
-  cardFilesMap[cardId] = files;
-
-  const card = document.getElementById(cardId);
-  if (!card) return;
-  const content = card.querySelector('.card-content');
-  if (!content) return;
-
-  let btn = card.querySelector('.card-attachment-btn');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.className = 'card-attachment-btn';
-    content.appendChild(btn);
-  }
-  btn.dataset.cardId = cardId;
-  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-    ${files.length} file${files.length !== 1 ? 's' : ''}`;
+  cardFilesMap[cardId] = files || [];
+  updateCardFilesPill(cardId, files);
 });
 
 
@@ -124,4 +113,7 @@ socket.on('card-edit-complete', (cardId, title, description, ownerName, isPrivat
   content.innerHTML = description;
   if (isPrivate !== undefined) card.dataset.isPrivate = isPrivate;
   if (deleteAtDayEnd !== undefined) card.dataset.deleteAtDayEnd = deleteAtDayEnd;
+
+  const dateElem = card.querySelector('.card-date');
+  if (dateElem) dateElem.textContent = formatCardDate(new Date().toISOString());
 });

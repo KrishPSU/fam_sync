@@ -567,7 +567,8 @@ body.dark-mode .cancel-btn-x:hover {
   justify-content: center;
 }
 
-#card-file-input {
+#card-file-input,
+#edit-card-file-input {
   display: none;
 }
 
@@ -611,6 +612,99 @@ body.dark-mode .attach-btn:hover {
 
 body.dark-mode .attached-file-name {
   color: #aaa;
+}
+
+
+/* Edit-modal attachments section */
+.edit-attachments {
+  margin-top: 0.5rem;
+}
+
+.edit-attachments-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.4rem;
+}
+
+.edit-card-files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  height: 100px;
+  overflow: auto;
+}
+
+.edit-file-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: #f5f6f8;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+}
+
+.edit-file-row .edit-file-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.edit-file-row .edit-file-new-tag {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #007bff;
+  background: #e2ecfb;
+  border-radius: 10px;
+  padding: 1px 7px;
+}
+
+.edit-file-remove-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #b33;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+
+.edit-file-remove-btn:hover {
+  background: #ffe5e5;
+}
+
+body.dark-mode .edit-attachments-label {
+  color: #aaa;
+}
+
+body.dark-mode .edit-file-row {
+  background: #2b2f33;
+  border-color: #444;
+}
+
+body.dark-mode .edit-file-row .edit-file-name {
+  color: #ddd;
+}
+
+body.dark-mode .edit-file-row .edit-file-new-tag {
+  color: #4dabf7;
+  background: #1e3a5f;
+}
+
+body.dark-mode .edit-file-remove-btn {
+  color: #ff6b6b;
+}
+
+body.dark-mode .edit-file-remove-btn:hover {
+  background: #3a2323;
 }
 
 

@@ -146,6 +146,27 @@ body.dark-mode .card-attachment-btn:hover {
   border-color: #4dabf7;
 }
 
+.card-attachment-loading {
+  cursor: default;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.attachment-spinner {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid rgba(0, 123, 255, 0.2);
+  border-top-color: #007bff;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+body.dark-mode .attachment-spinner {
+  border-color: rgba(90, 173, 255, 0.15);
+  border-top-color: #5aadff;
+}
+
 
 
 body.dark-mode .card {

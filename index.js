@@ -146,7 +146,7 @@ app.post('/api/upload-card-file', upload.single('file'), async (req, res) => {
   // document row by the indexer itself.
   indexCardFile(supabaseAdmin, fileRow).catch(() => {});
 
-  res.json({ success: true, url: urlData.publicUrl, fileName: file.originalname });
+  res.json({ success: true, id: fileRow.id, url: urlData.publicUrl, fileName: file.originalname });
 });
 
 
@@ -872,6 +872,50 @@ io.on("connection", function (socket) {
       return; // RLS blocked (not owner) or not found
     }
     socket.to(socket.familyId).emit('card-edit-complete', cardId, title, description, socket.displayName, !!isPrivate, !!deleteAtDayEnd);
+  });
+
+
+  // Delete a single attachment from a card. Owner-only: verified here with the
+  // admin client + a manual ownership check (same pattern as the upload route),
+  // so it doesn't depend on a card_files delete RLS policy. Deleting the row
+  // cascades to the AI index (ai_file_documents/ai_file_chunks).
+  socket.on('delete-card-file', async (cardFileId) => {
+    if (!cardFileId) return;
+
+    const { data: fileRow } = await supabaseAdmin
+      .from('card_files')
+      .select('file_path, card_id')
+      .eq('id', cardFileId)
+      .single();
+    if (!fileRow) return;
+
+    const { data: card } = await supabaseAdmin
+      .from('cards')
+      .select('user_id, is_private, family_id')
+      .eq('id', fileRow.card_id)
+      .single();
+    if (!card || card.user_id !== socket.userId) return; // not the owner
+
+    // Remove the storage object first, then the DB row (cascade cleans the index).
+    if (fileRow.file_path) {
+      const { error: storageError } = await supabaseAdmin.storage
+        .from('card-attachments')
+        .remove([fileRow.file_path]);
+      if (storageError) console.error('Storage deletion error:', storageError);
+    }
+
+    const { error: dbError } = await supabaseAdmin
+      .from('card_files')
+      .delete()
+      .eq('id', cardFileId);
+    if (dbError) { console.error(dbError); return; }
+
+    // Push the fresh (possibly empty) list to the family so their pill updates —
+    // only for cards they can actually see.
+    if (!card.is_private && socket.familyId) {
+      const files = await getCardFiles([fileRow.card_id]);
+      socket.to(socket.familyId).emit('card-files-updated', fileRow.card_id, files);
+    }
   });
 
 

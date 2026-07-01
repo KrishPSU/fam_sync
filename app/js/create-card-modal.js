@@ -63,6 +63,17 @@ socket.on('card-created', async (cardId) => {
   const filesToUpload = pendingFilesUpload;
   pendingFilesUpload = [];
 
+  // Show a loading pill immediately while files upload
+  const card = document.getElementById(cardId);
+  let loadingBtn = null;
+  if (card) {
+    loadingBtn = document.createElement('button');
+    loadingBtn.className = 'card-attachment-btn card-attachment-loading';
+    loadingBtn.disabled = true;
+    loadingBtn.innerHTML = `<div class="attachment-spinner"></div>Uploading…`;
+    card.querySelector('.card-content').appendChild(loadingBtn);
+  }
+
   const uploadedFiles = [];
 
   await Promise.all(filesToUpload.map(async (file) => {
@@ -79,7 +90,7 @@ socket.on('card-created', async (cardId) => {
       });
       if (res.ok) {
         const data = await res.json();
-        uploadedFiles.push({ card_id: cardId, file_name: data.fileName, file_url: data.url });
+        uploadedFiles.push({ id: data.id, card_id: cardId, file_name: data.fileName, file_url: data.url });
       } else {
         console.error('File upload failed:', await res.text());
       }
@@ -88,22 +99,13 @@ socket.on('card-created', async (cardId) => {
     }
   }));
 
+  if (loadingBtn) loadingBtn.remove();
+
   if (uploadedFiles.length === 0) return;
 
   cardFilesMap[cardId] = uploadedFiles;
 
-  const card = document.getElementById(cardId);
-  if (!card) return;
-
-  let btn = card.querySelector('.card-attachment-btn');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.className = 'card-attachment-btn';
-    card.querySelector('.card-content').appendChild(btn);
-  }
-  btn.dataset.cardId = cardId;
-  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-    ${uploadedFiles.length} file${uploadedFiles.length !== 1 ? 's' : ''}`;
+  updateCardFilesPill(cardId, uploadedFiles);
 
   // The family already rendered this card (from the new-card broadcast) before
   // these files existed. Tell the server so it can push the files to them and

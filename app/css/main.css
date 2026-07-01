@@ -26,6 +26,10 @@ body {
   transition: padding-right 0.3s ease;
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 body:has(.ai-assistant-window:not(.hidden)),
 body.ai-panel-open {
   padding-right: 376px;

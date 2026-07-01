@@ -166,6 +166,14 @@ const cardFilesMap = {};
 
 const LOADER_HTML = '<div class="loader-wrap"><div class="loader"></div></div>';
 
+// Lock background scroll while any modal overlay is open.
+const _modalScrollObserver = new MutationObserver(() => {
+  document.body.classList.toggle('modal-open', !!document.querySelector('.modal:not(.hidden)'));
+});
+document.querySelectorAll('.modal').forEach(el =>
+  _modalScrollObserver.observe(el, { attributes: true, attributeFilter: ['class'] })
+);
+
 function requestTodayData() {
   my_events_list.innerHTML = LOADER_HTML;
   my_tasks_list.innerHTML = LOADER_HTML;

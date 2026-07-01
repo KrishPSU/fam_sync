@@ -102,9 +102,12 @@ function renderOthersSection(files) {
       <span class="file-viewer-other-name">${file.file_name}</span>
     `;
     const open = makeOpenLink();
+    open.classList.add('file-link-loading');
     item.appendChild(open);
     row.appendChild(item);
-    fileObjectUrl(file).then(url => { open.href = url; }).catch(err => console.error(err));
+    fileObjectUrl(file)
+      .then(url => { open.href = url; open.classList.remove('file-link-loading'); })
+      .catch(err => { console.error(err); open.classList.remove('file-link-loading'); });
   });
   return wrapSection('Files', row);
 }
@@ -115,10 +118,30 @@ function renderImagesSection(files) {
   files.forEach(file => {
     const item = document.createElement('div');
     item.className = 'file-viewer-image-item';
+
+    const loader = document.createElement('div');
+    loader.className = 'file-viewer-item-loader';
+    const spinner = document.createElement('div');
+    spinner.className = 'file-viewer-item-spinner';
+    loader.appendChild(spinner);
+    item.appendChild(loader);
+
     const img = document.createElement('img');
     img.alt = file.file_name;
     img.className = 'file-viewer-image-thumb';
     item.appendChild(img);
+
+    const dl = document.createElement('a');
+    dl.download = file.file_name;
+    dl.className = 'file-viewer-image-download';
+    dl.title = 'Download';
+    dl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>`;
+    item.appendChild(dl);
+
     const open = document.createElement('a');
     open.target = '_blank';
     open.rel = 'noopener';
@@ -130,7 +153,10 @@ function renderImagesSection(files) {
       </svg>`;
     item.appendChild(open);
     row.appendChild(item);
-    fileObjectUrl(file).then(url => { img.src = url; open.href = url; }).catch(err => console.error(err));
+
+    fileObjectUrl(file)
+      .then(url => { img.src = url; open.href = url; dl.href = url; loader.remove(); })
+      .catch(err => { console.error(err); loader.innerHTML = `<span style="font-size:0.7rem;color:#aaa">Failed</span>`; });
   });
   return wrapSection('Images', row);
 }
@@ -146,15 +172,27 @@ function renderPdfsSection(files) {
     const nameSpan = document.createElement('span');
     nameSpan.textContent = file.file_name;
     const open = makeOpenLink();
+    open.classList.add('file-link-loading');
     nameWrap.appendChild(nameSpan);
     nameWrap.appendChild(open);
     item.appendChild(nameWrap);
+
+    const loader = document.createElement('div');
+    loader.className = 'file-viewer-item-loader';
+    const spinner = document.createElement('div');
+    spinner.className = 'file-viewer-item-spinner';
+    loader.appendChild(spinner);
+    item.appendChild(loader);
+
     const iframe = document.createElement('iframe');
     iframe.className = 'file-viewer-pdf-iframe';
     iframe.title = file.file_name;
     item.appendChild(iframe);
     row.appendChild(item);
-    fileObjectUrl(file).then(url => { iframe.src = url; open.href = url; }).catch(err => console.error(err));
+
+    fileObjectUrl(file)
+      .then(url => { iframe.src = url; open.href = url; open.classList.remove('file-link-loading'); loader.remove(); })
+      .catch(err => { console.error(err); loader.innerHTML = `<span style="font-size:0.7rem;color:#aaa">Failed to load PDF</span>`; open.classList.remove('file-link-loading'); });
   });
   return wrapSection('PDFs', row);
 }

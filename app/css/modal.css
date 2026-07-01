@@ -414,6 +414,54 @@ body.dark-mode .privacy-toggle-row {
   opacity: 1;
 }
 
+/* Download button — sits immediately left of the open button */
+.file-viewer-image-download {
+  position: absolute;
+  top: 6px;
+  right: 38px; /* 6px gap + 28px open + 4px spacing */
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.file-viewer-image-item:hover .file-viewer-image-download {
+  opacity: 1;
+}
+
+/* Spinner overlay while a file's blob URL is being fetched */
+.file-viewer-item-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f2f2f2;
+  z-index: 2;
+}
+
+.file-viewer-item-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid rgba(0, 123, 255, 0.15);
+  border-top-color: #007bff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* Loading state on the "Open" link for non-image, non-pdf files */
+.file-download-link.file-link-loading {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 /* ── PDF cards — square at 70% modal width ── */
 /* Modal is 80vw → 70% of that = 56vw */
 .file-viewer-pdf-item {
@@ -425,6 +473,7 @@ body.dark-mode .privacy-toggle-row {
   border: 1px solid #e5e5e5;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .file-viewer-pdf-name {
@@ -512,6 +561,20 @@ body.dark-mode .file-viewer-image-item {
 body.dark-mode .file-viewer-image-open {
   background: rgba(0, 0, 0, 0.7);
   color: #e3e3e3;
+}
+
+body.dark-mode .file-viewer-image-download {
+  background: rgba(0, 0, 0, 0.7);
+  color: #e3e3e3;
+}
+
+body.dark-mode .file-viewer-item-loader {
+  background: #2a2d30;
+}
+
+body.dark-mode .file-viewer-item-spinner {
+  border-color: rgba(90, 173, 255, 0.15);
+  border-top-color: #5aadff;
 }
 
 body.dark-mode .file-viewer-pdf-item {

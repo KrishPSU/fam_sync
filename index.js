@@ -118,19 +118,24 @@ app.post('/api/upload-card-file', upload.single('file'), async (req, res) => {
 
   if (storageError) {
     console.error('Storage error:', storageError);
-    return res.status(500).json({ error: 'Upload failed' });
+    return res.status(500).json({ error: 'Upload failed', detail: storageError.message });
   }
 
-  // No public URL is stored — the bucket is private and files are served through
-  // the authenticated /api/card-file/:id proxy. file_url is kept null (the column
-  // remains for backward compatibility but is unused).
+  // The bucket is private and files are served through the authenticated
+  // /api/card-file/:id proxy, so this stored URL is legacy and never read — but
+  // the file_url column is NOT NULL, so we still populate it with the constructed
+  // (non-resolving) public URL to satisfy the constraint.
+  const { data: urlData } = supabaseAdmin.storage
+    .from('card-attachments')
+    .getPublicUrl(filePath);
+
   const { data: fileRow, error: dbError } = await supabaseAdmin
     .from('card_files')
     .insert({
       card_id: cardId,
       file_name: file.originalname,
       file_path: filePath,
-      file_url: null,
+      file_url: urlData.publicUrl,
       uploader_id: user.id,
       family_id: card.family_id
     })
@@ -139,7 +144,7 @@ app.post('/api/upload-card-file', upload.single('file'), async (req, res) => {
 
   if (dbError) {
     console.error('DB error:', dbError);
-    return res.status(500).json({ error: 'Failed to save file record' });
+    return res.status(500).json({ error: 'Failed to save file record', detail: dbError.message });
   }
 
   // Index the file's text for the AI assistant in the background — don't block

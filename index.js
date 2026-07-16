@@ -627,9 +627,13 @@ io.on("connection", function (socket) {
 
 
   async function getCards() {
+    // A private card is visible only to its owner. Enforced here (not just in
+    // RLS) so it holds even if the is_private read policy hasn't been applied to
+    // the DB — is_private null/false is treated as public, matching 06_ai_rls_fix.
     const { data, error } = await socket.userSupabase
       .from('cards')
       .select('*, owner:profiles!user_id(display_name)')
+      .or(`is_private.is.false,is_private.is.null,user_id.eq.${socket.userId}`)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -695,10 +699,13 @@ io.on("connection", function (socket) {
   });
 
   async function getFamilyEvents() {
-    // RLS scopes this to the caller's family automatically.
+    // RLS scopes this to the caller's family automatically. Private events are
+    // additionally hidden from everyone but their owner — enforced here as well
+    // as in RLS so a private event never reaches another member's family view.
     const { data, error } = await socket.userSupabase
       .from('events')
       .select()
+      .or(`is_private.is.false,is_private.is.null,user_id.eq.${socket.userId}`)
 
     if (error) {
       console.error(error);
@@ -709,9 +716,11 @@ io.on("connection", function (socket) {
 
 
   async function getFamilyTasks() {
+    // A private task is visible only to its owner (mirrors getFamilyEvents).
     const { data, error } = await socket.userSupabase
       .from('tasks')
       .select()
+      .or(`is_private.is.false,is_private.is.null,user_id.eq.${socket.userId}`)
 
     if (error) {
       console.error(error);

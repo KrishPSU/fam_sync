@@ -27,8 +27,20 @@ async function getSession() {
   return session;
 }
 
+// Reject `promise` if it hasn't settled within `ms`. getSession() reads through
+// supabase-js's Web Locks guard, which can never settle rather than erroring —
+// leaving anything awaiting a token stuck forever with nothing to report. A
+// rejection is recoverable; a hang isn't.
+function withTimeout(promise, ms, label) {
+  let timer;
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms);
+  });
+  return Promise.race([promise, deadline]).finally(() => clearTimeout(timer));
+}
+
 // The current access token (JWT) for authenticating sockets / fetch requests.
 async function getToken() {
-  const session = await getSession();
+  const session = await withTimeout(getSession(), 10000, 'Reading your session');
   return session ? session.access_token : null;
 }

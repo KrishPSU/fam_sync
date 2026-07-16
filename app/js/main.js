@@ -302,6 +302,67 @@ function updateCardFilesPill(cardId, files) {
   btn.innerHTML = cardAttachmentPillHTML(files.length);
 }
 
+// A stalled upload used to leave the caller awaiting forever, so the card kept
+// an "Uploading…" pill that reads as a real attachment while nothing was ever
+// stored. Bound the request so a stall always becomes a reportable error.
+const UPLOAD_TIMEOUT_MS = 120000;
+
+// Upload one attachment for `cardId`. Resolves to the stored file, or throws a
+// message fit to show the user.
+async function uploadCardFile(file, cardId, token) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('cardId', cardId);
+
+  const res = await fetch('/api/upload-card-file', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData,
+    signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS)
+  });
+  if (!res.ok) throw new Error(`${file.name}: HTTP ${res.status} — ${await res.text()}`);
+
+  const data = await res.json();
+  return { id: data.id, card_id: cardId, file_name: data.fileName };
+}
+
+// Upload every file in `files` for `cardId`, collecting per-file failures rather
+// than rejecting — a partial upload still has files worth showing. The token is
+// read ONCE for the batch: a getToken() per file races that many Web Locks
+// acquisitions inside supabase-js, and the whole batch shares one auth outcome.
+async function uploadCardFiles(files, cardId) {
+  const uploaded = [];
+  const errors = [];
+
+  let token;
+  try {
+    token = await getToken();
+  } catch (err) {
+    console.error('Could not read session for upload:', err);
+    return { uploaded, errors: [err.message || String(err)] };
+  }
+
+  await Promise.all(files.map(async (file) => {
+    try {
+      uploaded.push(await uploadCardFile(file, cardId, token));
+    } catch (err) {
+      console.error('File upload failed:', err);
+      errors.push(err.message || String(err));
+    }
+  }));
+
+  return { uploaded, errors };
+}
+
+// Don't fail silently — otherwise the "Uploading…" pill just disappears and the
+// user has no idea their attachments were dropped. Surface the real reason so a
+// failure is diagnosable from the phone.
+function reportUploadErrors(errors) {
+  if (errors.length === 0) return;
+  alert("An attachment couldn't be uploaded:\n\n" + errors.join('\n\n') +
+        "\n\nOpen the card's menu → Edit to try again.");
+}
+
 function addCardToList(title, description, cardOwnerId, ownerName, cardId, files = [], isPrivate = false, deleteAtDayEnd = false, insertAtTop = false, createdAt = null) {
   if (files.length > 0) cardFilesMap[cardId] = files;
 

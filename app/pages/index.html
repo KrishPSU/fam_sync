@@ -13,7 +13,10 @@
 
 
   <script src="/env.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <!-- Pinned: an unpinned @2 silently picks up each new minor on every page
+       load, so the auth client can change under a running app. Keep in step
+       with the @supabase/supabase-js version in package.json. -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
   <script defer src="../js/auth.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script defer src="../js/main.js"></script>

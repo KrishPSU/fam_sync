@@ -142,8 +142,16 @@ app.post('/api/upload-card-file', upload.single('file'), async (req, res) => {
     .select()
     .single();
 
+  // The object is already in the bucket at this point, so a failed insert would
+  // strand it there forever: nothing references it, and card deletion only
+  // cleans up paths it can read back from card_files. Put it back the way we
+  // found it before reporting the failure.
   if (dbError) {
     console.error('DB error:', dbError);
+    const { error: cleanupError } = await supabaseAdmin.storage
+      .from('card-attachments')
+      .remove([filePath]);
+    if (cleanupError) console.error('Orphan cleanup failed for', filePath, cleanupError);
     return res.status(500).json({ error: 'Failed to save file record', detail: dbError.message });
   }
 
@@ -295,6 +303,37 @@ webPush.setVapidDetails(`mailto:${process.env.PERSONAL_EMAIL}`, process.env.PUBL
 
 
 
+// Deleting a card cascades its card_files rows away, which takes the only record
+// of where its attachments live in the bucket with them — so the paths have to
+// be read BEFORE the rows go, and the objects removed after. Split in two for
+// exactly that reason: collect first, delete the rows, then remove.
+//
+// Reads with the admin client so cleanup never depends on a card_files read
+// policy being in place; authorizing the delete is the caller's job.
+async function readCardAttachmentPaths(cardIds) {
+  if (!cardIds || cardIds.length === 0) return [];
+
+  const { data: files, error } = await supabaseAdmin
+    .from('card_files')
+    .select('file_path')
+    .in('card_id', cardIds);
+
+  if (error) {
+    console.error('Could not read attachment paths (objects may be orphaned):', error);
+    return [];
+  }
+  return (files || []).map(f => f.file_path).filter(Boolean);
+}
+
+async function removeStorageObjects(paths) {
+  if (!paths || paths.length === 0) return;
+  const { error } = await supabaseAdmin.storage
+    .from('card-attachments')
+    .remove(paths);
+  if (error) console.error('Storage deletion error:', error);
+}
+
+
 app.get('/api/cleanup', async (req, res) => {
   const secretKey = req.query.key;
   if (secretKey !== process.env.CRON_SECRET_KEY) {
@@ -307,6 +346,23 @@ app.get('/api/cleanup', async (req, res) => {
     const deleteTables = ['tasks', 'events', 'cards'];
 
     for (const table of deleteTables) {
+      // Cards can carry attachments, and expiring one has to take its files with
+      // it. Collect the paths while the card_files rows still exist — the delete
+      // below cascades them away.
+      let attachmentPaths = [];
+      if (table === 'cards') {
+        const { data: expiring, error: readError } = await supabaseAdmin
+          .from('cards')
+          .select('id')
+          .eq('delete_at_day_end', true);
+
+        if (readError) {
+          console.error('❌ Error reading expiring cards:', readError.message);
+          return res.status(500).send('Error deleting cards');
+        }
+        attachmentPaths = await readCardAttachmentPaths((expiring || []).map(c => c.id));
+      }
+
       // Admin client bypasses RLS — this is a trusted cron gated by CRON_SECRET_KEY.
       const { error } = await supabaseAdmin
         .from(table)
@@ -317,6 +373,9 @@ app.get('/api/cleanup', async (req, res) => {
         console.error(`❌ Error deleting ${table}:`, error.message);
         return res.status(500).send(`Error deleting ${table}`);
       }
+
+      // Rows are gone — now the objects they pointed at.
+      await removeStorageObjects(attachmentPaths);
     }
 
     // Pings are ephemeral notifications with no per-item flag, so they're cleared
@@ -902,11 +961,10 @@ io.on("connection", function (socket) {
   // Card Deletion / Edits
 
   socket.on('delete-card', async (cardId) => {
-    // Read file paths first (a family member may read these).
-    const { data: files } = await socket.userSupabase
-      .from('card_files')
-      .select('file_path')
-      .eq('card_id', cardId);
+    // Paths first — the delete below cascades card_files away, and with it any
+    // record of what to remove from the bucket. Read as admin: a read blocked by
+    // RLS would come back empty and silently strand the files forever.
+    const attachmentPaths = await readCardAttachmentPaths([cardId]);
 
     // Delete the card — RLS only permits this if the caller owns it.
     const { data, error } = await socket.userSupabase
@@ -921,12 +979,7 @@ io.on("connection", function (socket) {
     }
 
     // Card row gone (cascade removed card_files); clean up storage objects.
-    if (files && files.length > 0) {
-      const { error: storageError } = await supabaseAdmin.storage
-        .from('card-attachments')
-        .remove(files.map(f => f.file_path));
-      if (storageError) console.error('Storage deletion error:', storageError);
-    }
+    await removeStorageObjects(attachmentPaths);
 
     socket.to(socket.familyId).emit('card-deletion', cardId);
   });

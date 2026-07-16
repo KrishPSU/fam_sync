@@ -78,48 +78,22 @@ socket.on('card-created', async (cardId) => {
     card.querySelector('.card-content').appendChild(loadingBtn);
   }
 
-  const uploadedFiles = [];
-  let lastError = '';
-
-  await Promise.all(filesToUpload.map(async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('cardId', cardId);
-
-    try {
-      const token = await getToken();
-      const res = await fetch('/api/upload-card-file', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-      if (res.ok) {
-        const data = await res.json();
-        uploadedFiles.push({ id: data.id, card_id: cardId, file_name: data.fileName });
-      } else {
-        lastError = `HTTP ${res.status}: ${await res.text()}`;
-        console.error('File upload failed:', lastError);
-      }
-    } catch (err) {
-      lastError = (err && err.message) ? err.message : String(err);
-      console.error('File upload error:', err);
-    }
-  }));
-
-  if (loadingBtn) loadingBtn.remove();
-
-  // Don't fail silently — otherwise the "Uploading…" pill just disappears and the
-  // user has no idea their attachments were dropped. Surface the real reason so a
-  // failure is diagnosable from the phone.
-  if (lastError) {
-    alert("An attachment couldn't be uploaded:\n\n" + lastError + "\n\nOpen the card's menu → Edit to try again.");
+  // The loading pill must come off whatever happens below — one left behind is
+  // indistinguishable from a real attachment on the card.
+  let uploaded, errors;
+  try {
+    ({ uploaded, errors } = await uploadCardFiles(filesToUpload, cardId));
+  } finally {
+    if (loadingBtn) loadingBtn.remove();
   }
 
-  if (uploadedFiles.length === 0) return;
+  reportUploadErrors(errors);
 
-  cardFilesMap[cardId] = uploadedFiles;
+  if (uploaded.length === 0) return;
 
-  updateCardFilesPill(cardId, uploadedFiles);
+  cardFilesMap[cardId] = uploaded;
+
+  updateCardFilesPill(cardId, uploaded);
 
   // The family already rendered this card (from the new-card broadcast) before
   // these files existed. Tell the server so it can push the files to them and

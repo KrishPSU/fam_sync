@@ -141,30 +141,16 @@ async function applyStagedFileChanges(cardId, original, kept, newFiles) {
     content.appendChild(loadingBtn);
   }
 
-  const uploaded = [];
-  await Promise.all(newFiles.map(async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('cardId', cardId);
-    try {
-      const token = await getToken();
-      const res = await fetch('/api/upload-card-file', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-      if (res.ok) {
-        const d = await res.json();
-        uploaded.push({ id: d.id, card_id: cardId, file_name: d.fileName });
-      } else {
-        console.error('File upload failed:', await res.text());
-      }
-    } catch (err) {
-      console.error('File upload error:', err);
-    }
-  }));
+  // The loading pill must come off whatever happens below — one left behind is
+  // indistinguishable from a real attachment on the card.
+  let uploaded, errors;
+  try {
+    ({ uploaded, errors } = await uploadCardFiles(newFiles, cardId));
+  } finally {
+    if (loadingBtn) loadingBtn.remove();
+  }
 
-  if (loadingBtn) loadingBtn.remove();
+  reportUploadErrors(errors);
 
   const finalFiles = kept.concat(uploaded);
   cardFilesMap[cardId] = finalFiles;
